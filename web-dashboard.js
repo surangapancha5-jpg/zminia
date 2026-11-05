@@ -56,86 +56,16 @@ module.exports = function attachDashboard(app, options) {
   app.post('/api/auth/logout',async(req,res)=>{const t=token(req);if(t)await Session.deleteOne({tokenHash:hash(t)});res.setHeader('Set-Cookie',cookie(req,0));res.json({success:true});});
   app.get('/api/dashboard',auth,async(req,res)=>{const day=new Date().toISOString().slice(0,10);const notices=await Notice.find({$or:[{userId:req.user._id},{userId:null}]}).sort({createdAt:-1}).limit(30).lean();res.json({user:cleanUser(req.user),dailyAvailable:req.user.lastDaily!==day,notices,apps:await Config.findOne({key:'apps'}).lean().then(x=>(x?.value||[]).map(a=>({...a,unlocked:req.user.unlockedApps.includes(String(a.id||a.name))})))});});
   app.post('/api/daily',auth,async(req,res)=>{const day=new Date().toISOString().slice(0,10),rewards=[20,30,40,50,100,150],reward=rewards[Math.floor(Math.random()*rewards.length)];const u=await User.findOneAndUpdate({_id:req.user._id,lastDaily:{$ne:day}},{$inc:{coins:reward},$set:{lastDaily:day}},{new:true});if(!u)return res.status(409).json({error:'Daily reward already claimed.'});await Notice.create({userId:u._id,kind:'coin',message:`Daily reward: +${reward} coins`});res.json({reward,user:cleanUser(u)});});
-  app.post('/api/apps/unlock',auth,async(req,res)=>{const id=String(req.body.id||'');const row=await Config.findOne({key:'apps'}).lean();const app=(row?.value||[]).find(a=>String(a.id||a.name)===id);if(!app)return res.status(404).json({error:'App not found.'});if(req.user.unlockedApps.includes(id))return res.json({success:true,alreadyUnlocked:true});const price=Math.max(200,Number(app.price)||200);const u=await User.findOneAndUpdate({_id:req.user._id,coins:{$gte:price}},{$inc:{coins:-price},$addToSet:{unlockedApps:id}},{new:true});if(!u)return res.status(400).json({error:'Not enough coins.'});await Notice.create({userId:u._id,kind:'app',message:`Unlocked ${app.name}`});res.json({success:true,user:cleanUser(u),url:app.url||''});});
+  app.post('/api/apps/unlock',auth,async(req,res)=>{const id=String(req.body.id||'');const row=await Config.findOne({key:'apps'}).lean();const app=(row?.value||[]).find(a=>String(a.id||a.name)===id);if(!app)return res.status(404).json({error:'App not found.'});if(req.user.unlockedApps.includes(id))return res.json({success:true,alreadyUnlocked:true});const price=Math.max(1,Number(app.price)||200);const u=await User.findOneAndUpdate({_id:req.user._id,coins:{$gte:price}},{$inc:{coins:-price},$addToSet:{unlockedApps:id}},{new:true});if(!u)return res.status(400).json({error:'Not enough coins.'});await Notice.create({userId:u._id,kind:'app',message:`Unlocked ${app.name}`});res.json({success:true,user:cleanUser(u),url:app.url||''});});
   app.post('/api/pair',auth,async(req,res)=>{let n=String(req.body.number||'').replace(/\D/g,'');if(n.startsWith('0'))n='94'+n.slice(1);if(!/^94\d{9}$/.test(n))return res.status(400).json({error:'Enter a valid Sri Lankan number.'});try{const r=await requestPairCode(n);res.json({code:r.code});}catch(e){res.status(500).json({error:e.message||'Pairing failed'});}});
   app.post('/api/admin/login',async(req,res)=>{try{const identity=String(req.body.identity||req.body.email||req.body.username||'').trim().toLowerCase(),password=String(req.body.password||'');const expectedEmail=String(process.env.ADMIN_EMAIL||'').trim().toLowerCase(),expectedUsername=String(process.env.ADMIN_USERNAME||'').trim().toLowerCase(),expectedPass=String(process.env.ADMIN_PASSWORD||'');const identityOk=!!identity&&((expectedEmail&&identity===expectedEmail)||(expectedUsername&&identity===expectedUsername));if(!expectedEmail||!expectedUsername||!expectedPass||!identityOk||password!==expectedPass)return res.status(401).json({error:'Invalid admin username/email or password. Check ADMIN_EMAIL, ADMIN_USERNAME and ADMIN_PASSWORD in hosting environment variables.'});const t=crypto.randomBytes(32).toString('hex');await AdminSession.create({tokenHash:hash(t),expiresAt:new Date(Date.now()+8*3600000)});res.json({token:t});}catch(e){res.status(503).json({error:'Admin login unavailable. Check MongoDB connection.'});}});
   app.get('/api/admin/users',requireAdmin,async(req,res)=>{const users=await User.find({}).select('email username coins createdAt').sort({createdAt:-1}).limit(500).lean();res.json({users});});
   app.post('/api/admin/coins',requireAdmin,async(req,res)=>{const target=String(req.body.target||'').trim().toLowerCase(),amount=Number(req.body.amount);if(!Number.isSafeInteger(amount)||amount<1||amount>1000000)return res.status(400).json({error:'Invalid coin amount.'});const u=await User.findOneAndUpdate({$or:[{email:target},{username:target}]},{$inc:{coins:amount}},{new:true});if(!u)return res.status(404).json({error:'User not found.'});await Notice.create({userId:u._id,kind:'coin',message:`Developer sent you ${amount} coins.`});res.json({user:cleanUser(u)});});
   app.get('/api/admin/config',requireAdmin,async(req,res)=>{const rows=await Config.find({}).lean();res.json({config:Object.fromEntries(rows.map(x=>[x.key,x.value]))});});
-  app.put('/api/admin/config/:key',requireAdmin,async(req,res)=>{const key=String(req.params.key);if(!['apps','ai'].includes(key))return res.status(400).json({error:'Unsupported setting.'});let value=req.body.value;if(key==='ai'){const old=await Config.findOne({key:'ai'}).lean();const previous=old?.value||{};value={...previous,...(value||{})};if(!String(value.key||'').trim())value.key=previous.key||process.env.OPENROUTER_API_KEY||'';if(!String(value.endpoint||'').trim())value.endpoint=process.env.OPENROUTER_ENDPOINT||previous.endpoint||'https://openrouter.ai/api/v1/chat/completions';if(!String(value.model||'').trim())value.model=process.env.OPENROUTER_MODEL||previous.model||'meta-llama/llama-3.3-70b-instruct';}await Config.findOneAndUpdate({key},{$set:{value}},{upsert:true});res.json({success:true});});
+  app.put('/api/admin/config/:key',requireAdmin,async(req,res)=>{const key=String(req.params.key);if(key!=='apps')return res.status(400).json({error:'Unsupported setting.'});const value=Array.isArray(req.body.value)?req.body.value:[];await Config.findOneAndUpdate({key},{$set:{value}},{upsert:true});res.json({success:true});});
+  app.post('/api/admin/apps',requireAdmin,async(req,res)=>{try{const name=String(req.body.name||'').trim().slice(0,60),url=String(req.body.url||'').trim(),price=Number(req.body.price);if(!name)return res.status(400).json({error:'App name is required.'});let parsed;try{parsed=new URL(url);}catch{return res.status(400).json({error:'Enter a valid app URL.'});}if(!['http:','https:'].includes(parsed.protocol))return res.status(400).json({error:'App URL must start with http:// or https://.'});if(!Number.isSafeInteger(price)||price<1||price>1000000)return res.status(400).json({error:'Coin amount must be between 1 and 1,000,000.'});const row=await Config.findOne({key:'apps'}).lean(),apps=Array.isArray(row?.value)?row.value:[];const id=crypto.randomBytes(8).toString('hex');apps.push({id,name,url:parsed.href,price});await Config.findOneAndUpdate({key:'apps'},{$set:{value:apps}},{upsert:true});res.status(201).json({success:true,apps});}catch(e){res.status(500).json({error:'Could not add app.'});}});
+  app.post('/api/admin/apps/delete',requireAdmin,async(req,res)=>{try{const id=String(req.body.id||'');if(!id)return res.status(400).json({error:'App ID is required.'});const row=await Config.findOne({key:'apps'}).lean(),apps=Array.isArray(row?.value)?row.value:[],next=apps.filter(a=>String(a.id||a.name)!==id);if(next.length===apps.length)return res.status(404).json({error:'App not found.'});await Config.findOneAndUpdate({key:'apps'},{$set:{value:next}},{upsert:true});res.json({success:true,apps:next});}catch(e){res.status(500).json({error:'Could not delete app.'});}});
   app.post('/api/admin/message',requireAdmin,async(req,res)=>{const target=String(req.body.target||'').trim().toLowerCase(),message=String(req.body.message||'').trim().slice(0,1000);if(!message)return res.status(400).json({error:'Message required.'});const u=await User.findOne({$or:[{email:target},{username:target}]});if(!u)return res.status(404).json({error:'User not found.'});await Notice.create({userId:u._id,kind:'message',message});res.json({success:true});});
 
-  // ZANTA AI: keep credentials server-side and return actionable errors.
-  app.post('/api/ai/chat', auth, async (req, res) => {
-    try {
-      if (mongoose.connection.readyState !== 1) {
-        return res.status(503).json({ error: 'Database is not connected. Please try again shortly.' });
-      }
-      const row = await Config.findOne({ key: 'ai' }).lean();
-      const cfg = row && row.value && typeof row.value === 'object' ? row.value : {};
-      const endpoint = String(cfg.endpoint || process.env.OPENROUTER_ENDPOINT || 'https://openrouter.ai/api/v1/chat/completions').trim();
-      const apiKey = String(cfg.key || process.env.OPENROUTER_API_KEY || '').trim();
-      const model = String(cfg.model || process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.3-70b-instruct').trim();
-
-      if (!apiKey || apiKey === 'your_new_openrouter_api_key') {
-        return res.status(503).json({ error: 'ZANTA AI is not configured. Add a valid OPENROUTER_API_KEY in hosting environment variables or save the key in the owner AI settings.' });
-      }
-      if (!/^https:\/\//i.test(endpoint)) {
-        return res.status(400).json({ error: 'Invalid AI endpoint. Use the HTTPS OpenRouter chat-completions endpoint.' });
-      }
-      if (!model) return res.status(400).json({ error: 'AI model is missing. Set OPENROUTER_MODEL or choose a model in the AI configuration.' });
-
-      const incoming = Array.isArray(req.body && req.body.messages) ? req.body.messages : [];
-      const messages = incoming
-        .filter(m => m && ['user', 'assistant', 'system'].includes(m.role) && typeof m.content === 'string' && m.content.trim())
-        .slice(-20)
-        .map(m => ({ role: m.role, content: m.content.slice(0, 12000) }));
-      if (!messages.length || messages[messages.length - 1].role !== 'user') {
-        return res.status(400).json({ error: 'Enter a message first.' });
-      }
-
-      const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 45000);
-      let upstream;
-      try {
-        upstream = await fetch(endpoint, {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${apiKey}`,
-            'Content-Type': 'application/json',
-            'HTTP-Referer': `${req.protocol}://${req.get('host')}`,
-            'X-Title': 'ZANTA-XMD OFC'
-          },
-          body: JSON.stringify({ model, messages, temperature: 0.7 })
-          , signal: controller.signal
-        });
-      } finally {
-        clearTimeout(timeout);
-      }
-
-      const raw = await upstream.text();
-      let data = {};
-      try { data = raw ? JSON.parse(raw) : {}; } catch { data = {}; }
-      if (!upstream.ok) {
-        const providerMessage = data && data.error && (data.error.message || data.error) || data.message;
-        if (upstream.status === 401) return res.status(502).json({ error: 'OpenRouter rejected the API key (401). Check or replace OPENROUTER_API_KEY.' });
-        if (upstream.status === 402) return res.status(502).json({ error: 'OpenRouter credits or billing are insufficient (402).' });
-        if (upstream.status === 404) return res.status(502).json({ error: `OpenRouter model or endpoint not found (404). Check the model name: ${model}.` });
-        if (upstream.status === 429) return res.status(502).json({ error: 'OpenRouter rate limit reached (429). Wait a little and try again.' });
-        return res.status(502).json({ error: `OpenRouter error (${upstream.status}): ${String(providerMessage || 'No provider details returned').slice(0, 500)}` });
-      }
-
-      let reply = data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
-      if (Array.isArray(reply)) reply = reply.map(part => typeof part === 'string' ? part : part && part.text || '').join('');
-      if (typeof reply !== 'string' || !reply.trim()) {
-        return res.status(502).json({ error: 'OpenRouter returned no text. Check whether the selected model supports chat completions.' });
-      }
-      return res.json({ reply: reply.trim() });
-    } catch (e) {
-      const timedOut = e && (e.name === 'AbortError' || e.name === 'TimeoutError');
-      console.error('[ZANTA AI] request failed:', e && e.message ? e.message : e);
-      return res.status(timedOut ? 504 : 502).json({ error: timedOut ? 'ZANTA AI timed out after 45 seconds. Try again.' : 'Could not connect to OpenRouter. Check hosting network access and server logs.' });
-    }
-  });
   app.get('/api/stats',async(req,res)=>{try{const [botCount,commandCount]=await Promise.all([mongoose.connection.db.collection('darkdinusessions').countDocuments({}),Promise.resolve(require('fs').readdirSync(commandsDir).filter(x=>x.endsWith('.js')).length)]);res.json({botCount,commandCount});}catch{res.status(503).json({error:'Stats unavailable'});}});
 };
