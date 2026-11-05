@@ -36,6 +36,18 @@ module.exports = function attachDashboard(app, options) {
   async function requireAdmin(req,res,next){try{const t=String(req.headers['x-admin-token']||'');const ok=t&&await AdminSession.exists({tokenHash:hash(t),expiresAt:{$gt:new Date()}});if(!ok)return res.status(404).json({error:'Not found'});next();}catch{return res.status(503).json({error:'Unavailable'});}}
   app.use('/api/',(req,res,next)=>{res.set('Cache-Control','no-store');next();});
   app.get('/',(req,res)=>res.sendFile(require('path').join(__dirname,'public','index.html')));
+  // Serve the editable user dashboard from MongoDB when an admin has saved it.
+  app.get('/user-dashboard.html', async (req, res) => {
+    try {
+      const saved = await Config.findOne({ key: 'userDashboardHtml' }).lean();
+      if (saved && typeof saved.value === 'string' && saved.value.trim()) {
+        res.set('Content-Type', 'text/html; charset=utf-8');
+        res.set('Cache-Control', 'no-store');
+        return res.status(200).send(saved.value);
+      }
+    } catch (error) { console.error('[ZANTA] Could not read saved user dashboard:', error); }
+    return res.sendFile(require('path').join(__dirname, 'public', 'user-dashboard.html'));
+  });
   // Serve the same dashboard shell at the private owner-console URL.
   app.get('/zanta-owner-console-7f3a',(req,res)=>res.sendFile(require('path').join(__dirname,'public','index.html')));
   app.get('/api/auth/me',async(req,res)=>{try{const u=await current(req);res.json({authenticated:!!u,user:u?cleanUser(u):null});}catch{res.status(503).json({error:'Database unavailable'});}});
@@ -81,6 +93,34 @@ module.exports = function attachDashboard(app, options) {
   app.get('/api/admin/users',requireAdmin,async(req,res)=>{const users=await User.find({}).select('email username coins createdAt').sort({createdAt:-1}).limit(500).lean();res.json({users});});
   app.post('/api/admin/coins',requireAdmin,async(req,res)=>{const target=String(req.body.target||'').trim().toLowerCase(),amount=Number(req.body.amount);if(!Number.isSafeInteger(amount)||amount<1||amount>1000000)return res.status(400).json({error:'Invalid coin amount.'});const u=await User.findOneAndUpdate({$or:[{email:target},{username:target}]},{$inc:{coins:amount}},{new:true});if(!u)return res.status(404).json({error:'User not found.'});await Notice.create({userId:u._id,kind:'coin',message:`Developer sent you ${amount} coins.`});res.json({user:cleanUser(u)});});
   app.get('/api/admin/config',requireAdmin,async(req,res)=>{const rows=await Config.find({}).lean();res.json({config:Object.fromEntries(rows.map(x=>[x.key,x.value]))});});
+  // Admin HTML editor: store the complete user-dashboard.html in MongoDB so saves persist across redeploys.
+  app.get('/api/admin/site-files/user-dashboard', requireAdmin, async (req, res) => {
+    try {
+      const saved = await Config.findOne({ key: 'userDashboardHtml' }).lean();
+      const file = require('path').join(__dirname, 'public', 'user-dashboard.html');
+      const html = typeof saved?.value === 'string' && saved.value.trim()
+        ? saved.value : require('fs').readFileSync(file, 'utf8');
+      res.set('Cache-Control', 'no-store');
+      return res.json({ success: true, html, source: saved?.value ? 'database' : 'file' });
+    } catch (error) {
+      console.error('[ZANTA] Could not load user dashboard HTML:', error);
+      return res.status(500).json({ error: 'Could not load user-dashboard.html.' });
+    }
+  });
+  app.put('/api/admin/site-files/user-dashboard', requireAdmin, async (req, res) => {
+    try {
+      const html = req.body && req.body.html;
+      if (typeof html !== 'string' || !html.trim()) return res.status(400).json({ error: 'Paste the user-dashboard.html content first.' });
+      if (Buffer.byteLength(html, 'utf8') > 200 * 1024) return res.status(413).json({ error: 'HTML file is too large (maximum 200 KB).' });
+      if (!/<html[\s>]/i.test(html) || !/<\/html\s*>/i.test(html)) return res.status(400).json({ error: 'Please paste a complete HTML document including <html> and </html>.' });
+      await Config.findOneAndUpdate({ key: 'userDashboardHtml' }, { $set: { value: html } }, { upsert: true, new: true });
+      res.set('Cache-Control', 'no-store');
+      return res.json({ success: true, message: 'user-dashboard.html saved to MongoDB.' });
+    } catch (error) {
+      console.error('[ZANTA] Could not save user dashboard HTML:', error);
+      return res.status(500).json({ error: 'Could not save user-dashboard.html. Check MongoDB connection.' });
+    }
+  });
   app.put('/api/admin/config/:key',requireAdmin,async(req,res)=>{const key=String(req.params.key);if(key==='apps'){const value=Array.isArray(req.body.value)?req.body.value:[];await Config.findOneAndUpdate({key},{$set:{value}},{upsert:true});return res.json({success:true});}if(key==='dashboardUI'){const value=req.body.value;if(!value||typeof value!=='object'||!Array.isArray(value.order)||!value.sizes||typeof value.sizes!=='object'||!value.text||typeof value.text!=='object')return res.status(400).json({error:'Dashboard config must include order, sizes and text.'});const allowed=['clock','hero','balance','tiles','rewards'];value.order=value.order.filter(x=>allowed.includes(String(x))).slice(0,5);for(const k of allowed){const n=Number(value.sizes[k]||12);value.sizes[k]=Math.max(3,Math.min(12,Number.isFinite(n)?Math.round(n):12));}for(const k of Object.keys(value.text))value.text[k]=String(value.text[k]||'').slice(0,160);await Config.findOneAndUpdate({key},{$set:{value}},{upsert:true});return res.json({success:true});}return res.status(400).json({error:'Unsupported setting.'});});
   app.post('/api/admin/apps',requireAdmin,async(req,res)=>{try{const name=String(req.body.name||'').trim().slice(0,60),url=String(req.body.url||'').trim(),price=Number(req.body.price);if(!name)return res.status(400).json({error:'App name is required.'});let parsed;try{parsed=new URL(url);}catch{return res.status(400).json({error:'Enter a valid app URL.'});}if(!['http:','https:'].includes(parsed.protocol))return res.status(400).json({error:'App URL must start with http:// or https://.'});if(!Number.isSafeInteger(price)||price<1||price>1000000)return res.status(400).json({error:'Coin amount must be between 1 and 1,000,000.'});const row=await Config.findOne({key:'apps'}).lean(),apps=Array.isArray(row?.value)?row.value:[];const id=crypto.randomBytes(8).toString('hex');apps.push({id,name,url:parsed.href,price});await Config.findOneAndUpdate({key:'apps'},{$set:{value:apps}},{upsert:true});res.status(201).json({success:true,apps});}catch(e){res.status(500).json({error:'Could not add app.'});}});
   app.post('/api/admin/apps/delete',requireAdmin,async(req,res)=>{try{const id=String(req.body.id||'');if(!id)return res.status(400).json({error:'App ID is required.'});const row=await Config.findOne({key:'apps'}).lean(),apps=Array.isArray(row?.value)?row.value:[],next=apps.filter(a=>String(a.id||a.name)!==id);if(next.length===apps.length)return res.status(404).json({error:'App not found.'});await Config.findOneAndUpdate({key:'apps'},{$set:{value:next}},{upsert:true});res.json({success:true,apps:next});}catch(e){res.status(500).json({error:'Could not delete app.'});}});
