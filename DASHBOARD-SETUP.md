@@ -17,3 +17,13 @@ Web pages cannot enumerate the email accounts installed on a visitor's phone. Th
 - Daily rewards are granted once per UTC day, selected from 20, 30, 40, 50, 100, and 150 coins.
 - Coins, notices, users, app unlocks, and configuration are stored in MongoDB.
 - Configure a real email verification flow, rate limiting, CSRF protection, HTTPS, backups, and audit logs before public production use.
+
+
+## Owner admin login
+Set these environment variables in your hosting provider (do not put them in public HTML):
+
+- `ADMIN_EMAIL=zantaxmd@gmail.com`
+- `ADMIN_USERNAME=@devloper`
+- `ADMIN_PASSWORD` = the owner password you chose (`suranga12345` if you are keeping the supplied password)
+
+Redeploy/restart the Node.js service after saving the variables. At `/zanta-owner-console-7f3a`, sign in using either the email or `@devloper` plus the password. The admin session is stored in MongoDB.
