@@ -40,7 +40,12 @@ module.exports = function attachDashboard(app, options) {
     const email=String(req.body.email||'').trim().toLowerCase(), username=String(req.body.username||'').trim().toLowerCase(), p=req.body.password;
     if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return res.status(400).json({error:'Enter a valid email address.'});
     if(!usernameOk(username))return res.status(400).json({error:'Username must start with @ and contain 4–21 characters.'});
-    if(!validPass(p))return res.status(400).json({error:'Password must be 9–19 characters, include letters and numbers, and avoid simple sequences.'});
+    // The configured owner account may use its exact server-side credentials;
+    // normal registrations must still satisfy the password-strength policy.
+    const isConfiguredOwner = email === String(process.env.ADMIN_EMAIL||'').trim().toLowerCase()
+      && username === String(process.env.ADMIN_USERNAME||'').trim().toLowerCase()
+      && String(p||'') === String(process.env.ADMIN_PASSWORD||'');
+    if(!isConfiguredOwner && !validPass(p))return res.status(400).json({error:'Password must be 9–19 characters, include letters and numbers, and avoid simple sequences.'});
     if(await User.exists({$or:[{email},{username}]}))return res.status(409).json({error:'Email or username already registered.'});
     const salt=crypto.randomBytes(16).toString('hex'),passwordHash=await passHash(p,salt);
     const u=await User.create({email,username,passwordHash,passwordSalt:salt});await session(res,req,u);res.status(201).json({user:cleanUser(u)});
