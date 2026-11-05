@@ -1,30 +1,31 @@
 {
-"name": "zanta-xmd",
-"version": "2.2.0",
-"description": "ZANTA-XMD WhatsApp Bot with Web Pairing UI & MongoDB Session",
-"main": "index.js",
-"scripts": {
-"start": "node --max-old-space-size=450 index.js"
-},
-"dependencies": {
-"@ffmpeg-installer/ffmpeg": "^1.1.0",
-"@whiskeysockets/baileys": "https://github.com/WhiskeySockets/Baileys.git",
-"axios": "^1.7.9",
-"chalk": "^4.1.2",
-"dotenv": "^16.4.7",
-"emoji-mixer": "^1.3.1",
-"express": "^4.21.2",
-"form-data": "^4.0.1",
-"gifted-dls": "^1.1.8",
-"mongoose": "^9.1.0",
-"pino": "^9.6.0",
-"qrcode": "^1.5.4",
-"qrcode-terminal": "^0.12.0",
-"sharp": "^0.34.0",
-"youtube-dl-exec": "^3.1.15",
-"yt-search": "^2.12.1"
-},
-"engines": {
-"node": ">=20.x"
-}
+  "name": "zanta-xmd",
+  "version": "2.2.0",
+  "description": "ZANTA-XMD WhatsApp Bot with Web Pairing UI & MongoDB Session",
+  "main": "index.js",
+  "scripts": {
+    "start": "node --max-old-space-size=450 index.js"
+  },
+  "dependencies": {
+    "@ffmpeg-installer/ffmpeg": "^1.1.0",
+    "@whiskeysockets/baileys": "https://github.com/WhiskeySockets/Baileys.git",
+    "axios": "^1.7.9",
+    "chalk": "^4.1.2",
+    "dotenv": "^16.4.7",
+    "emoji-mixer": "^1.3.1",
+    "express": "^4.21.2",
+    "form-data": "^4.0.1",
+    "gifted-dls": "^1.1.8",
+    "mongoose": "^9.1.0",
+    "nodemailer": "^6.9.16",
+    "pino": "^9.6.0",
+    "qrcode": "^1.5.4",
+    "qrcode-terminal": "^0.12.0",
+    "sharp": "^0.34.0",
+    "youtube-dl-exec": "^3.1.15",
+    "yt-search": "^2.12.1"
+  },
+  "engines": {
+    "node": ">=20.x"
+  }
 }
