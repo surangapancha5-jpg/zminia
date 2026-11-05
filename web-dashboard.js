@@ -35,6 +35,8 @@ module.exports = function attachDashboard(app, options) {
   async function requireAdmin(req,res,next){try{const t=String(req.headers['x-admin-token']||'');const ok=t&&await AdminSession.exists({tokenHash:hash(t),expiresAt:{$gt:new Date()}});if(!ok)return res.status(404).json({error:'Not found'});next();}catch{return res.status(503).json({error:'Unavailable'});}}
   app.use('/api/',(req,res,next)=>{res.set('Cache-Control','no-store');next();});
   app.get('/',(req,res)=>res.sendFile(require('path').join(__dirname,'public','index.html')));
+  // Serve the same dashboard shell at the private owner-console URL.
+  app.get('/zanta-owner-console-7f3a',(req,res)=>res.sendFile(require('path').join(__dirname,'public','index.html')));
   app.get('/api/auth/me',async(req,res)=>{try{const u=await current(req);res.json({authenticated:!!u,user:u?cleanUser(u):null});}catch{res.status(503).json({error:'Database unavailable'});}});
   app.post('/api/auth/register',async(req,res)=>{try{
     const email=String(req.body.email||'').trim().toLowerCase(), username=String(req.body.username||'').trim().toLowerCase(), p=req.body.password;
