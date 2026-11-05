@@ -22,7 +22,7 @@ Web pages cannot enumerate the email accounts installed on a visitor's phone. Th
 ## Owner admin login
 Set these environment variables in your hosting provider (do not put them in public HTML):
 
-- `ADMIN_EMAIL=zantaxmd@gmail.com`
+- `ADMIN_EMAIL=zantaxmd1@gmail.com`
 - `ADMIN_USERNAME=@devloper`
 - `ADMIN_PASSWORD` = the owner password you chose (`suranga12345` if you are keeping the supplied password)
 
