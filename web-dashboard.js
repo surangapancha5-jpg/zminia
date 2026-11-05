@@ -65,7 +65,77 @@ module.exports = function attachDashboard(app, options) {
   app.put('/api/admin/config/:key',requireAdmin,async(req,res)=>{const key=String(req.params.key);if(!['apps','ai'].includes(key))return res.status(400).json({error:'Unsupported setting.'});let value=req.body.value;if(key==='ai'){const old=await Config.findOne({key:'ai'}).lean();const previous=old?.value||{};value={...previous,...(value||{})};if(!String(value.key||'').trim())value.key=previous.key||process.env.OPENROUTER_API_KEY||'';if(!String(value.endpoint||'').trim())value.endpoint=process.env.OPENROUTER_ENDPOINT||previous.endpoint||'https://openrouter.ai/api/v1/chat/completions';if(!String(value.model||'').trim())value.model=process.env.OPENROUTER_MODEL||previous.model||'meta-llama/llama-3.3-70b-instruct';}await Config.findOneAndUpdate({key},{$set:{value}},{upsert:true});res.json({success:true});});
   app.post('/api/admin/message',requireAdmin,async(req,res)=>{const target=String(req.body.target||'').trim().toLowerCase(),message=String(req.body.message||'').trim().slice(0,1000);if(!message)return res.status(400).json({error:'Message required.'});const u=await User.findOne({$or:[{email:target},{username:target}]});if(!u)return res.status(404).json({error:'User not found.'});await Notice.create({userId:u._id,kind:'message',message});res.json({success:true});});
 
-  // ZANTA AI: API credentials remain on the server and are never sent to the browser.
-  app.post('/api/ai/chat',auth,async(req,res)=>{try{const row=await Config.findOne({key:'ai'}).lean();const cfg=row?.value||{};const endpoint=String(cfg.endpoint||process.env.OPENROUTER_ENDPOINT||'https://openrouter.ai/api/v1/chat/completions');const apiKey=String(cfg.key||process.env.OPENROUTER_API_KEY||'').trim();const model=String(cfg.model||process.env.OPENROUTER_MODEL||'meta-llama/llama-3.3-70b-instruct');if(!apiKey)return res.status(503).json({error:'ZANTA AI is not configured yet. Please contact the developer.'});if(!/^https:\/\//i.test(endpoint))return res.status(400).json({error:'Invalid AI endpoint.'});const messages=Array.isArray(req.body.messages)?req.body.messages.filter(m=>m&&['user','assistant','system'].includes(m.role)&&typeof m.content==='string').slice(-20):[];if(!messages.length||messages[messages.length-1].role!=='user')return res.status(400).json({error:'Enter a message first.'});const upstream=await fetch(endpoint,{method:'POST',headers:{Authorization:`Bearer ${apiKey}`,'Content-Type':'application/json','HTTP-Referer':`${req.protocol}://${req.get('host')}`,'X-Title':'ZANTA AI'},body:JSON.stringify({model,messages,temperature:0.7})});const data=await upstream.json().catch(()=>({}));if(!upstream.ok)return res.status(502).json({error:data?.error?.message||`AI provider error (${upstream.status})`});const reply=data?.choices?.[0]?.message?.content;if(typeof reply!=='string'||!reply.trim())return res.status(502).json({error:'AI provider returned an empty response.'});res.json({reply:reply.trim()});}catch(e){res.status(502).json({error:'Could not connect to ZANTA AI.'});}});
+  // ZANTA AI: keep credentials server-side and return actionable errors.
+  app.post('/api/ai/chat', auth, async (req, res) => {
+    try {
+      if (mongoose.connection.readyState !== 1) {
+        return res.status(503).json({ error: 'Database is not connected. Please try again shortly.' });
+      }
+      const row = await Config.findOne({ key: 'ai' }).lean();
+      const cfg = row && row.value && typeof row.value === 'object' ? row.value : {};
+      const endpoint = String(cfg.endpoint || process.env.OPENROUTER_ENDPOINT || 'https://openrouter.ai/api/v1/chat/completions').trim();
+      const apiKey = String(cfg.key || process.env.OPENROUTER_API_KEY || '').trim();
+      const model = String(cfg.model || process.env.OPENROUTER_MODEL || 'meta-llama/llama-3.3-70b-instruct').trim();
+
+      if (!apiKey || apiKey === 'your_new_openrouter_api_key') {
+        return res.status(503).json({ error: 'ZANTA AI is not configured. Add a valid OPENROUTER_API_KEY in hosting environment variables or save the key in the owner AI settings.' });
+      }
+      if (!/^https:\/\//i.test(endpoint)) {
+        return res.status(400).json({ error: 'Invalid AI endpoint. Use the HTTPS OpenRouter chat-completions endpoint.' });
+      }
+      if (!model) return res.status(400).json({ error: 'AI model is missing. Set OPENROUTER_MODEL or choose a model in the AI configuration.' });
+
+      const incoming = Array.isArray(req.body && req.body.messages) ? req.body.messages : [];
+      const messages = incoming
+        .filter(m => m && ['user', 'assistant', 'system'].includes(m.role) && typeof m.content === 'string' && m.content.trim())
+        .slice(-20)
+        .map(m => ({ role: m.role, content: m.content.slice(0, 12000) }));
+      if (!messages.length || messages[messages.length - 1].role !== 'user') {
+        return res.status(400).json({ error: 'Enter a message first.' });
+      }
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 45000);
+      let upstream;
+      try {
+        upstream = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': `${req.protocol}://${req.get('host')}`,
+            'X-Title': 'ZANTA-XMD OFC'
+          },
+          body: JSON.stringify({ model, messages, temperature: 0.7 })
+          , signal: controller.signal
+        });
+      } finally {
+        clearTimeout(timeout);
+      }
+
+      const raw = await upstream.text();
+      let data = {};
+      try { data = raw ? JSON.parse(raw) : {}; } catch { data = {}; }
+      if (!upstream.ok) {
+        const providerMessage = data && data.error && (data.error.message || data.error) || data.message;
+        if (upstream.status === 401) return res.status(502).json({ error: 'OpenRouter rejected the API key (401). Check or replace OPENROUTER_API_KEY.' });
+        if (upstream.status === 402) return res.status(502).json({ error: 'OpenRouter credits or billing are insufficient (402).' });
+        if (upstream.status === 404) return res.status(502).json({ error: `OpenRouter model or endpoint not found (404). Check the model name: ${model}.` });
+        if (upstream.status === 429) return res.status(502).json({ error: 'OpenRouter rate limit reached (429). Wait a little and try again.' });
+        return res.status(502).json({ error: `OpenRouter error (${upstream.status}): ${String(providerMessage || 'No provider details returned').slice(0, 500)}` });
+      }
+
+      let reply = data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content;
+      if (Array.isArray(reply)) reply = reply.map(part => typeof part === 'string' ? part : part && part.text || '').join('');
+      if (typeof reply !== 'string' || !reply.trim()) {
+        return res.status(502).json({ error: 'OpenRouter returned no text. Check whether the selected model supports chat completions.' });
+      }
+      return res.json({ reply: reply.trim() });
+    } catch (e) {
+      const timedOut = e && (e.name === 'AbortError' || e.name === 'TimeoutError');
+      console.error('[ZANTA AI] request failed:', e && e.message ? e.message : e);
+      return res.status(timedOut ? 504 : 502).json({ error: timedOut ? 'ZANTA AI timed out after 45 seconds. Try again.' : 'Could not connect to OpenRouter. Check hosting network access and server logs.' });
+    }
+  });
   app.get('/api/stats',async(req,res)=>{try{const [botCount,commandCount]=await Promise.all([mongoose.connection.db.collection('darkdinusessions').countDocuments({}),Promise.resolve(require('fs').readdirSync(commandsDir).filter(x=>x.endsWith('.js')).length)]);res.json({botCount,commandCount});}catch{res.status(503).json({error:'Stats unavailable'});}});
 };
