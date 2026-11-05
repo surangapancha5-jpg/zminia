@@ -27,3 +27,7 @@ Set these environment variables in your hosting provider (do not put them in pub
 - `ADMIN_PASSWORD=suranga123456`
 
 Redeploy/restart the Node.js service after saving the variables. At `/zanta-owner-console-7f3a`, sign in using either the email or `@zanta000` plus the password. The admin session is stored in MongoDB.
+
+
+## ZANTA AI configuration
+Set `OPENROUTER_API_KEY` in your hosting provider's server-side Environment Variables/Secrets. Optional: set `OPENROUTER_ENDPOINT` and `OPENROUTER_MODEL`. Restart/redeploy after saving. Never put the API key in `public/index.html`. The backend uses the environment key if no key is stored in MongoDB; saving a blank key in the admin form will no longer erase an existing key. Use a newly generated key because the key pasted into chat was exposed.
