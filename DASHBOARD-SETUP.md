@@ -22,8 +22,8 @@ Web pages cannot enumerate the email accounts installed on a visitor's phone. Th
 ## Owner admin login
 Set these environment variables in your hosting provider (do not put them in public HTML):
 
-- `ADMIN_EMAIL=zantaxmd1@gmail.com`
-- `ADMIN_USERNAME=@devloper`
-- `ADMIN_PASSWORD` = the owner password you chose (`suranga12345` if you are keeping the supplied password)
+- `ADMIN_EMAIL=zantaxmd2@gmail.com`
+- `ADMIN_USERNAME=@zanta000`
+- `ADMIN_PASSWORD=suranga123456`
 
-Redeploy/restart the Node.js service after saving the variables. At `/zanta-owner-console-7f3a`, sign in using either the email or `@devloper` plus the password. The admin session is stored in MongoDB.
+Redeploy/restart the Node.js service after saving the variables. At `/zanta-owner-console-7f3a`, sign in using either the email or `@zanta000` plus the password. The admin session is stored in MongoDB.
