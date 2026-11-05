@@ -9,10 +9,11 @@ module.exports = function attachDashboard(app, options) {
   const User = mongoose.models.ZantaWebUser || mongoose.model('ZantaWebUser', new Schema({
     email:{type:String,required:true,unique:true,lowercase:true,trim:true},
     username:{type:String,required:true,unique:true,trim:true,lowercase:true},
-    passwordHash:{type:String,required:true}, passwordSalt:{type:String,required:true},
+    passwordHash:{type:String,default:''}, passwordSalt:{type:String,default:''}, googleSub:{type:String,default:'',index:true},
     coins:{type:Number,default:0,min:0}, taskClaims:{type:[String],default:[]}, unlockedApps:{type:[String],default:[]}, lastDaily:{type:String,default:''},
     createdAt:{type:Date,default:Date.now}, hidden:{type:Boolean,default:false}
   },{collection:'zanta_web_users'}));
+  const EmailOtp = mongoose.models.ZantaEmailOtp || mongoose.model('ZantaEmailOtp', new Schema({email:{type:String,required:true,index:true},codeHash:{type:String,required:true},expiresAt:{type:Date,required:true,index:{expires:0}},lastSentAt:{type:Date,default:Date.now},attempts:{type:Number,default:0}},{collection:'zanta_email_otps'}));
   const Session = mongoose.models.ZantaWebSession || mongoose.model('ZantaWebSession',new Schema({
     tokenHash:{type:String,unique:true,required:true},userId:{type:Schema.Types.ObjectId,required:true,index:true},
     expiresAt:{type:Date,required:true,index:{expires:0}}
@@ -57,6 +58,44 @@ module.exports = function attachDashboard(app, options) {
   });
   // Serve the same dashboard shell at the private owner-console URL.
   app.get('/zanta-owner-console-7f3a',(req,res)=>res.sendFile(require('path').join(__dirname,'public','index.html')));
+  // OAuth Client ID is public by design; env var can override this default.
+  const GOOGLE_CLIENT_ID = String(process.env.GOOGLE_CLIENT_ID || '1069665681737-151ruk70qcma4gcp8s7bn62jmg3oe80b.apps.googleusercontent.com');
+  app.get('/api/auth/config',(req,res)=>res.json({googleClientId:GOOGLE_CLIENT_ID}));
+  // Gmail SMTP email verification. Configure SMTP_USER and SMTP_APP_PASSWORD in Heroku Config Vars.
+  app.post('/api/auth/send-otp',async(req,res)=>{try{
+    const email=String(req.body.email||'').trim().toLowerCase();
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))return res.status(400).json({error:'Enter a valid Gmail address.'});
+    if(!email.endsWith('@gmail.com'))return res.status(400).json({error:'Please use a Gmail address.'});
+    if(await User.exists({email}))return res.status(409).json({error:'This email is already registered. Please log in.'});
+    const previous=await EmailOtp.findOne({email});
+    if(previous&&Date.now()-new Date(previous.lastSentAt).getTime()<60_000)return res.status(429).json({error:'Please wait 60 seconds before requesting another OTP.'});
+    const user=String(process.env.SMTP_USER||'').trim();const pass=String(process.env.SMTP_APP_PASSWORD||'').replace(/\s/g,'');
+    if(!user||!pass)return res.status(503).json({error:'Gmail SMTP is not configured. Add SMTP_USER and SMTP_APP_PASSWORD in Heroku Config Vars.'});
+    const nodemailer=require('nodemailer');const transporter=nodemailer.createTransport({service:'gmail',auth:{user,pass}});
+    const code=String(crypto.randomInt(0,1000000)).padStart(6,'0');
+    const codeHash=hash(code+String(process.env.OTP_PEPPER||process.env.SESSION_SECRET||'zanta-otp-pepper'));
+    await EmailOtp.findOneAndUpdate({email},{$set:{codeHash,expiresAt:new Date(Date.now()+5*60_000),lastSentAt:new Date(),attempts:0}},{upsert:true,new:true});
+    await transporter.sendMail({from:`ZANTA Verification <${user}>`,to:email,subject:'Your ZANTA verification code',text:`Your ZANTA verification code is ${code}. It expires in 5 minutes. Do not share this code with anyone.`,html:`<div style="font-family:Arial;background:#071225;color:#fff;padding:28px;border-radius:16px"><h2>ZANTA Email Verification</h2><p>Your verification code is:</p><div style="font-size:32px;font-weight:bold;letter-spacing:8px;color:#65e6ff">${code}</div><p>This code expires in 5 minutes. Do not share it.</p></div>`});
+    res.json({success:true,message:'OTP sent. Check your Gmail inbox and spam folder.'});
+  }catch(e){console.error('[Email OTP send]',e);res.status(500).json({error:'Could not send OTP. Check Gmail App Password and SMTP settings.'});}});
+  app.post('/api/auth/verify-otp',async(req,res)=>{try{
+    const email=String(req.body.email||'').trim().toLowerCase(),code=String(req.body.code||'').trim();
+    if(!/^\d{6}$/.test(code))return res.status(400).json({error:'Enter the 6-digit OTP.'});
+    const row=await EmailOtp.findOne({email});if(!row||row.expiresAt<=new Date())return res.status(400).json({error:'OTP expired. Request a new code.'});
+    if(row.attempts>=5)return res.status(429).json({error:'Too many incorrect attempts. Request a new OTP.'});
+    const expected=hash(code+String(process.env.OTP_PEPPER||process.env.SESSION_SECRET||'zanta-otp-pepper'));
+    if(!crypto.timingSafeEqual(Buffer.from(expected,'hex'),Buffer.from(row.codeHash,'hex'))){row.attempts++;await row.save();return res.status(400).json({error:'Incorrect OTP.'});}
+    row.codeHash='VERIFIED';row.expiresAt=new Date(Date.now()+10*60_000);await row.save();res.json({success:true,message:'Email verified. Complete your registration.'});
+  }catch(e){res.status(500).json({error:'OTP verification failed.'});}});
+  app.post('/api/auth/register-otp',async(req,res)=>{try{
+    const email=String(req.body.email||'').trim().toLowerCase(),username=String(req.body.username||'').trim().toLowerCase(),p=String(req.body.password||'');
+    const verified=await EmailOtp.findOne({email,codeHash:'VERIFIED',expiresAt:{$gt:new Date()}});if(!verified)return res.status(403).json({error:'Verify your email with OTP first.'});
+    if(!usernameOk(username))return res.status(400).json({error:'Username must start with @ and contain 4–21 characters.'});
+    if(!validPass(p))return res.status(400).json({error:'Password must be 9–19 characters, include letters and numbers, and avoid simple sequences.'});
+    if(await User.exists({$or:[{email},{username}]}))return res.status(409).json({error:'Email or username already registered.'});
+    const salt=crypto.randomBytes(16).toString('hex'),passwordHash=await passHash(p,salt);const u=await User.create({email,username,passwordHash,passwordSalt:salt});await EmailOtp.deleteMany({email});await session(res,req,u);res.status(201).json({user:cleanUser(u)});
+  }catch(e){console.error('[OTP registration]',e);res.status(500).json({error:'Could not create account.'});}});
+  app.post('/api/auth/google',async(req,res)=>{try{const credential=String(req.body.credential||'');const username=String(req.body.username||'').trim().toLowerCase();if(!credential)return res.status(400).json({error:'Choose a Google account first.'});if(!usernameOk(username))return res.status(400).json({error:'Username must start with @ and contain 4–21 characters.'});const verify=await fetch('https://oauth2.googleapis.com/tokeninfo?id_token='+encodeURIComponent(credential));if(!verify.ok)return res.status(401).json({error:'Google sign-in could not be verified.'});const claims=await verify.json();const clientId=GOOGLE_CLIENT_ID;if(!clientId||claims.aud!==clientId||claims.email_verified!=='true'||Number(claims.exp)*1000<Date.now())return res.status(401).json({error:'Google account verification failed. Check GOOGLE_CLIENT_ID.'});const email=String(claims.email||'').trim().toLowerCase();let u=await User.findOne({$or:[{googleSub:String(claims.sub)},{email}]});if(u){if(u.username!==username&&await User.exists({username}))return res.status(409).json({error:'That username is already taken.'});if(u.username!==username){u.username=username;await u.save();}}else{if(await User.exists({username}))return res.status(409).json({error:'That username is already taken.'});u=await User.create({email,username,googleSub:String(claims.sub)});}await session(res,req,u);res.json({user:cleanUser(u)});}catch(e){console.error('[Google auth]',e);res.status(500).json({error:'Google sign-in failed.'});}});
   app.get('/api/auth/me',async(req,res)=>{try{const u=await current(req);res.json({authenticated:!!u,user:u?cleanUser(u):null});}catch{res.status(503).json({error:'Database unavailable'});}});
   app.post('/api/auth/register',async(req,res)=>{try{
     const email=String(req.body.email||'').trim().toLowerCase(), username=String(req.body.username||'').trim().toLowerCase(), p=req.body.password;
@@ -72,7 +111,7 @@ module.exports = function attachDashboard(app, options) {
     const salt=crypto.randomBytes(16).toString('hex'),passwordHash=await passHash(p,salt);
     const u=await User.create({email,username,passwordHash,passwordSalt:salt});await session(res,req,u);res.status(201).json({user:cleanUser(u)});
   }catch(e){res.status(500).json({error:'Registration failed.'});}});
-  app.post('/api/auth/login',async(req,res)=>{try{const id=String(req.body.identity||'').trim().toLowerCase(),p=String(req.body.password||'');const u=await User.findOne({$or:[{email:id},{username:id}]});if(!u||!crypto.timingSafeEqual(Buffer.from(await passHash(p,u.passwordSalt),'hex'),Buffer.from(u.passwordHash,'hex')))return res.status(401).json({error:'Invalid login details.'});await session(res,req,u);res.json({user:cleanUser(u)});}catch{res.status(500).json({error:'Login failed.'});}});
+  app.post('/api/auth/login',async(req,res)=>{try{const id=String(req.body.identity||'').trim().toLowerCase(),p=String(req.body.password||'');const u=await User.findOne({$or:[{email:id},{username:id}]});if(!u||!u.passwordHash||!u.passwordSalt||!crypto.timingSafeEqual(Buffer.from(await passHash(p,u.passwordSalt),'hex'),Buffer.from(u.passwordHash,'hex')))return res.status(401).json({error:'Invalid login details.'});await session(res,req,u);res.json({user:cleanUser(u)});}catch{res.status(500).json({error:'Login failed.'});}});
   app.post('/api/auth/logout',async(req,res)=>{const t=token(req);if(t)await Session.deleteOne({tokenHash:hash(t)});res.setHeader('Set-Cookie',cookie(req,0));res.json({success:true});});
   app.get('/api/dashboard',auth,async(req,res)=>{const day=new Date().toISOString().slice(0,10);const notices=await Notice.find({$or:[{userId:req.user._id},{userId:null}]}).sort({createdAt:-1}).limit(30).lean();const [appsRow,uiRow]=await Promise.all([Config.findOne({key:'apps'}).lean(),Config.findOne({key:'dashboardUI'}).lean()]);res.json({user:cleanUser(req.user),dailyAvailable:req.user.lastDaily!==day,notices, dashboardUI:uiRow?.value||{},apps:(appsRow?.value||[]).map(a=>({...a,unlocked:req.user.unlockedApps.includes(String(a.id||a.name))}))});});
   // User directory, friend invitations and private MongoDB chat.
