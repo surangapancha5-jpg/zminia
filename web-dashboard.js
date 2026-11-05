@@ -35,7 +35,9 @@ module.exports = function attachDashboard(app, options) {
   async function passHash(p,salt){return (await scrypt(p,salt,64)).toString('hex');}
   async function requireAdmin(req,res,next){try{const t=String(req.headers['x-admin-token']||'');const ok=t&&await AdminSession.exists({tokenHash:hash(t),expiresAt:{$gt:new Date()}});if(!ok)return res.status(404).json({error:'Not found'});next();}catch{return res.status(503).json({error:'Unavailable'});}}
   app.use('/api/',(req,res,next)=>{res.set('Cache-Control','no-store');next();});
-  app.get('/',(req,res)=>res.sendFile(require('path').join(__dirname,'public','index.html')));
+  app.get('/',(req,res)=>res.sendFile(require('path').join(__dirname,'public','loading.html')));
+  app.get('/home',(req,res)=>res.sendFile(require('path').join(__dirname,'public','index.html')));
+  app.get('/loading.html',(req,res)=>res.sendFile(require('path').join(__dirname,'public','loading.html')));
   // Serve the editable user dashboard from MongoDB when an admin has saved it.
   app.get('/user-dashboard.html', async (req, res) => {
     try {
