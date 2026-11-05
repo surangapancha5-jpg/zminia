@@ -1,0 +1,1 @@
+VIP Rewards update: YouTube and WhatsApp branded SVG logos added. Each reward button opens its configured channel and credits 50 coins on the first tap only. Server-side taskClaims prevents repeat claims. Total: 100 coins. Subscription/follow status is not independently verified.
