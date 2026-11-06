@@ -28,8 +28,10 @@ module.exports = function attachDashboard(app, options) {
   const ChatGroup = mongoose.models.ZantaChatGroup || mongoose.model('ZantaChatGroup',new Schema({name:{type:String,required:true,maxlength:60},owner:{type:Schema.Types.ObjectId,required:true,index:true},members:[Schema.Types.ObjectId],admins:{type:[Schema.Types.ObjectId],default:[]},avatar:{type:String,default:''},createdAt:{type:Date,default:Date.now}},{collection:'zanta_chat_groups'}));
   const GroupMessage = mongoose.models.ZantaGroupMessage || mongoose.model('ZantaGroupMessage',new Schema({groupId:{type:Schema.Types.ObjectId,index:true},from:{type:Schema.Types.ObjectId,index:true},text:{type:String,required:true,maxlength:2000},replyTo:{type:Schema.Types.Mixed,default:null},reactions:{type:[{userId:Schema.Types.ObjectId,emoji:String}],default:[]},deleted:{type:Boolean,default:false},createdAt:{type:Date,default:Date.now}},{collection:'zanta_group_messages'}));
   const SupportTicket = mongoose.models.ZantaSupportTicket || mongoose.model('ZantaSupportTicket',new Schema({userId:{type:Schema.Types.ObjectId,index:true},username:String,email:String,subject:{type:String,default:'Support request'},message:{type:String,required:true,maxlength:2000},createdAt:{type:Date,default:Date.now},status:{type:String,default:'open'}},{collection:'zanta_support_tickets'}));
+  const FeedPost = mongoose.models.ZantaFeedPost || mongoose.model('ZantaFeedPost',new Schema({author:{type:Schema.Types.ObjectId,required:true,index:true},text:{type:String,default:'',maxlength:5000},mediaUrl:{type:String,default:'',maxlength:300000},mediaType:{type:String,enum:['image','video',''],default:''},likes:{type:[Schema.Types.ObjectId],default:[]},comments:{type:[{userId:Schema.Types.ObjectId,text:{type:String,maxlength:500},createdAt:{type:Date,default:Date.now}}],default:[]},createdAt:{type:Date,default:Date.now,index:true},updatedAt:{type:Date,default:Date.now}},{collection:'zanta_feed_posts'}));
   const COOKIE='zanta_session', hash=s=>crypto.createHash('sha256').update(s).digest('hex');
-  const cleanUser=u=>({id:String(u._id),email:u.email,username:u.username,coins:u.coins,taskClaims:u.taskClaims||[],createdAt:u.createdAt});
+  const isOwnerIdentity=email=>String(email||'').trim().toLowerCase()===String(process.env.ADMIN_EMAIL||'').trim().toLowerCase();
+  const cleanUser=u=>({id:String(u._id),email:u.email,username:u.username,coins:u.coins,taskClaims:u.taskClaims||[],createdAt:u.createdAt,verified:!!u.verified||isOwnerIdentity(u.email)});
   const cookie=(req,max)=>`${COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=${max}${process.env.NODE_ENV==='production'?'; Secure':''}`;
   function token(req){for(const p of (req.headers.cookie||'').split(';')){const i=p.indexOf('=');if(i>0&&p.slice(0,i).trim()===COOKIE)return decodeURIComponent(p.slice(i+1));}return '';}
   async function session(res,req,u){const t=crypto.randomBytes(32).toString('hex');await Session.create({tokenHash:hash(t),userId:u._id,expiresAt:new Date(Date.now()+30*864e5)});res.setHeader('Set-Cookie',`${COOKIE}=${t}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000${process.env.NODE_ENV==='production'?'; Secure':''}`);}
@@ -101,6 +103,40 @@ module.exports = function attachDashboard(app, options) {
   app.post('/api/auth/login',async(req,res)=>{try{const id=String(req.body.identity||'').trim().toLowerCase(),p=String(req.body.password||'');const u=await User.findOne({$or:[{email:id},{username:id}]});if(!u||!u.passwordHash||!u.passwordSalt||!crypto.timingSafeEqual(Buffer.from(await passHash(p,u.passwordSalt),'hex'),Buffer.from(u.passwordHash,'hex')))return res.status(401).json({error:'Invalid login details.'});await session(res,req,u);res.json({user:cleanUser(u)});}catch{res.status(500).json({error:'Login failed.'});}});
   app.post('/api/auth/logout',async(req,res)=>{const t=token(req);if(t)await Session.deleteOne({tokenHash:hash(t)});res.setHeader('Set-Cookie',cookie(req,0));res.json({success:true});});
   app.get('/api/dashboard',auth,async(req,res)=>{const day=new Date().toISOString().slice(0,10);const notices=await Notice.find({$or:[{userId:req.user._id},{userId:null}]}).sort({createdAt:-1}).limit(30).lean();const [appsRow,uiRow]=await Promise.all([Config.findOne({key:'apps'}).lean(),Config.findOne({key:'dashboardUI'}).lean()]);res.json({user:cleanUser(req.user),dailyAvailable:req.user.lastDaily!==day,notices, dashboardUI:uiRow?.value||{},apps:(appsRow?.value||[]).map(a=>({...a,unlocked:req.user.unlockedApps.includes(String(a.id||a.name))}))});});
+  // Facebook-style social feed. Posts live in a separate MongoDB collection so existing bot/session data is untouched.
+  app.get('/api/feed',auth,async(req,res)=>{
+    try{
+      const posts=await FeedPost.find({}).sort({createdAt:-1}).limit(100).lean();
+      const ids=[...new Set(posts.map(p=>String(p.author)).concat(posts.flatMap(p=>(p.comments||[]).map(c=>String(c.userId)))) )].filter(mongoose.isValidObjectId);
+      const users=await User.find({_id:{$in:ids}}).select('username email verified').lean();
+      const um=new Map(users.map(u=>[String(u._id),u]));
+      const out=posts.map(p=>({id:String(p._id),text:p.text||'',mediaUrl:p.mediaUrl||'',mediaType:p.mediaType||'',createdAt:p.createdAt,liked:(p.likes||[]).some(x=>String(x)===String(req.user._id)),likes:(p.likes||[]).length,canDelete:String(p.author)===String(req.user._id),author:{id:String(p.author),username:um.get(String(p.author))?.username||'@user',verified:!!um.get(String(p.author))?.verified||isOwnerIdentity(um.get(String(p.author))?.email)},comments:(p.comments||[]).slice(-50).map(c=>({id:String(c._id),text:c.text,createdAt:c.createdAt,userId:String(c.userId),username:um.get(String(c.userId))?.username||'@user',verified:!!um.get(String(c.userId))?.verified||isOwnerIdentity(um.get(String(c.userId))?.email)}))}));
+      res.json({posts:out});
+    }catch(e){console.error('[Feed GET]',e);res.status(500).json({error:'Could not load feed.'});}
+  });
+  app.post('/api/feed',auth,async(req,res)=>{
+    try{
+      const text=String(req.body.text||'').trim().slice(0,5000);
+      const mediaUrl=String(req.body.mediaUrl||'').trim().slice(0,300000);
+      const mediaType=['image','video'].includes(String(req.body.mediaType||''))?String(req.body.mediaType):'';
+      if(!text&&!mediaUrl)return res.status(400).json({error:'Write something or add media first.'});
+      if(mediaUrl && !/^(https?:\/\/|data:image\/|data:video\/)/i.test(mediaUrl))return res.status(400).json({error:'Media must be an http(s) URL or a supported data URL.'});
+      const post=await FeedPost.create({author:req.user._id,text,mediaUrl,mediaType});
+      res.status(201).json({success:true,id:String(post._id)});
+    }catch(e){console.error('[Feed POST]',e);res.status(500).json({error:'Could not create post.'});}
+  });
+  app.post('/api/feed/:id/like',auth,async(req,res)=>{
+    try{const post=await FeedPost.findById(req.params.id);if(!post)return res.status(404).json({error:'Post not found.'});const i=post.likes.findIndex(x=>String(x)===String(req.user._id));if(i>=0)post.likes.splice(i,1);else post.likes.push(req.user._id);await post.save();res.json({liked:i<0,likes:post.likes.length});}
+    catch(e){res.status(500).json({error:'Could not update like.'});}
+  });
+  app.post('/api/feed/:id/comments',auth,async(req,res)=>{
+    try{const text=String(req.body.text||'').trim().slice(0,500);if(!text)return res.status(400).json({error:'Comment cannot be empty.'});const post=await FeedPost.findById(req.params.id);if(!post)return res.status(404).json({error:'Post not found.'});post.comments.push({userId:req.user._id,text});await post.save();res.json({success:true});}
+    catch(e){res.status(500).json({error:'Could not add comment.'});}
+  });
+  app.delete('/api/feed/:id',auth,async(req,res)=>{
+    try{const post=await FeedPost.findOneAndDelete({_id:req.params.id,author:req.user._id});if(!post)return res.status(404).json({error:'Post not found or not yours.'});res.json({success:true});}
+    catch(e){res.status(500).json({error:'Could not delete post.'});}
+  });
   // User directory, friend invitations and private MongoDB chat.
   app.get('/api/users',auth,async(req,res)=>{const users=await User.find({_id:{$ne:req.user._id},hidden:{$ne:true}}).select('username createdAt').sort({username:1}).limit(500).lean();const ids=users.map(u=>u._id);const relations=await FriendInvite.find({$or:[{from:req.user._id,to:{$in:ids}},{to:req.user._id,from:{$in:ids}}]}).lean();const map=new Map();for(const r of relations){const other=String(r.from)===String(req.user._id)?String(r.to):String(r.from);const prev=map.get(other);const rank={rejected:0,pending:1,accepted:2};if(!prev||(rank[r.status]||0)>(rank[prev.status]||0))map.set(other,{status:r.status,inviteId:String(r._id),outgoing:String(r.from)===String(req.user._id)});}res.json({users:users.map(u=>({id:String(u._id),username:u.username,relation:map.get(String(u._id))||null}))});});
   app.post('/api/invites',auth,async(req,res)=>{const target=String(req.body.userId||'');if(!mongoose.isValidObjectId(target)||target===String(req.user._id))return res.status(400).json({error:'Choose a valid user.'});if(!await User.exists({_id:target}))return res.status(404).json({error:'User not found.'});const existing=await FriendInvite.findOne({$or:[{from:req.user._id,to:target},{from:target,to:req.user._id}]}).sort({createdAt:-1});if(existing&&existing.status==='accepted')return res.status(409).json({error:'You are already connected.'});if(existing&&existing.status==='pending')return res.status(409).json({error:'An invitation is already pending.'});const invite=await FriendInvite.create({from:req.user._id,to:target});await Notice.create({userId:target,kind:'friend_invite',message:`${req.user.username} invited you to chat.`,data:{inviteId:String(invite._id),fromUserId:String(req.user._id),fromUsername:req.user.username}});res.status(201).json({success:true});});
