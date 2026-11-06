@@ -1,6 +1,8 @@
 // ============================================================================
-// ZANTA-XMD - Dashboard 2: WhatsApp Auto Reaction API Engine (Standalone)
+// ZANTA-XMD - Dashboard 2: Standalone WhatsApp Auto Reaction Engine
 // ============================================================================
+const path = require('path');
+const crypto = require('crypto');
 
 module.exports = function attachDashboard2(app, options = {}) {
   const { mongoose, sock, getBaileysSock } = options;
@@ -10,9 +12,9 @@ module.exports = function attachDashboard2(app, options = {}) {
     return;
   }
 
-  // Schema Definitions
   const Schema = mongoose.Schema;
 
+  // --- MONGOOSE MODELS FOR DASHBOARD 2 ---
   const User = mongoose.models.ZantaWebUser || mongoose.model('ZantaWebUser', new Schema({
     coins: { type: Number, default: 0, min: 0 }
   }, { collection: 'zanta_web_users', strict: false }));
@@ -40,9 +42,8 @@ module.exports = function attachDashboard2(app, options = {}) {
     expiresAt: { type: Date, required: true, index: { expires: 0 } }
   }, { collection: 'zanta_web_sessions' }));
 
-  // Helper Functions & Auth
+  // --- AUTH MIDDLEWARE & HELPERS ---
   const COOKIE = 'zanta_session';
-  const crypto = require('crypto');
   const hash = s => crypto.createHash('sha256').update(s).digest('hex');
 
   function getToken(req) {
@@ -67,13 +68,13 @@ module.exports = function attachDashboard2(app, options = {}) {
     }
   };
 
-  // Serve Dashboard 2 Page (Optional Standalone Route)
+  // --- ROUTE FOR REACT HTML PAGE ---
   app.get('/react', (req, res) => {
-    res.sendFile(require('path').join(__dirname, 'public', 'react.html'));
+    res.sendFile(path.join(__dirname, 'public', 'react.html'));
   });
 
   // ============================================================================
-  // STANDALONE AUTOMATED WHATSAPP CHANNEL REACTION API
+  // --- AUTOMATED WHATSAPP CHANNEL REACTION API ENDPOINT ---
   // ============================================================================
   app.post('/api/whatsapp/react-campaign', authMiddleware, async (req, res) => {
     try {
@@ -95,15 +96,14 @@ module.exports = function attachDashboard2(app, options = {}) {
         return res.status(400).json({ error: 'Choose a valid emoji.' });
       }
 
-      // Deduct 1 coin from the user
+      // 1 Coin එකක් කපාගැනීම
       const user = await User.findOneAndUpdate({ _id: req.user._id, coins: { $gte: 1 } }, { $inc: { coins: -1 } }, { new: true });
       if (!user) return res.status(400).json({ error: 'Not enough coins. You need 1 coin.' });
 
       try {
-        // Resolve active Baileys Socket instance
+        // Baileys socket එක ලබා ගැනීම
         const activeSock = sock || (typeof getBaileysSock === 'function' ? getBaileysSock() : global.whatsappSock);
-
-        // Parse WhatsApp Channel Path: /channel/CHANNEL_CODE/MESSAGE_ID
+        
         const pathParts = parsed.pathname.split('/').filter(Boolean);
         const channelCode = pathParts[1];
         const serverMsgId = pathParts[2];
@@ -115,7 +115,7 @@ module.exports = function attachDashboard2(app, options = {}) {
               targetJid = channelCode + '@newsletter';
             }
 
-            // Send Automated Reaction via Baileys
+            // ස්වයංක්‍රීයව WhatsApp Channel එකට Reaction යැවීම
             await activeSock.sendMessage(targetJid, {
               react: {
                 text: emoji,
@@ -151,7 +151,7 @@ module.exports = function attachDashboard2(app, options = {}) {
         });
 
       } catch (err) {
-        // Refund coin on error
+        // දෝෂයක් ආවොත් කපාගත් කොයින් එක ආපසු ලබා දීම (Refund)
         await User.updateOne({ _id: user._id }, { $inc: { coins: 1 } });
         throw err;
       }
@@ -161,5 +161,5 @@ module.exports = function attachDashboard2(app, options = {}) {
     }
   });
 
-  console.log('[ZANTA] Standalone Dashboard 2 attached successfully!');
+  console.log('[ZANTA] Standalone Dashboard 2 attached successfully with Auto-Reaction engine!');
 };
