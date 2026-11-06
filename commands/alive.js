@@ -6,10 +6,9 @@ const GIFT_VIDEO =
 const ROUND_VIDEO =
   "https://res.cloudinary.com/dzfbtko0t/video/upload/v1793441357/zanta_media_uploads/fywcjhso98ylcb7axtiv.mp4";
 
-// Cache videos in memory to prevent downloading every time
+// Cache variables
 let videoCache = null;
 let videoLoading = false;
-
 let roundVideoCache = null;
 let roundVideoLoading = false;
 
@@ -38,7 +37,6 @@ async function downloadVideo(url) {
 
 async function getGiftVideo() {
   if (videoCache) return videoCache;
-
   if (videoLoading) {  
       for (let i = 0; i < 30; i++) {  
           await new Promise(resolve => setTimeout(resolve, 1000));  
@@ -58,7 +56,6 @@ async function getGiftVideo() {
 
 async function getRoundVideo() {
   if (roundVideoCache) return roundVideoCache;
-
   if (roundVideoLoading) {  
       for (let i = 0; i < 30; i++) {  
           await new Promise(resolve => setTimeout(resolve, 1000));  
@@ -81,7 +78,6 @@ function formatUptime(seconds) {
   const h = Math.floor((seconds % 86400) / 3600);
   const m = Math.floor((seconds % 3600) / 60);
   const s = Math.floor(seconds % 60);
-
   return `${d}d ${h}h ${m}m ${s}s`;
 }
 
@@ -134,7 +130,7 @@ module.exports = {
 
 > 𝐙𝐀𝐍𝐓𝐀-𝐗𝐌𝐃 𝐎𝐅𝐂`;
 
-          // 1. Send Round Video (Video Note) if possible
+          // 1. Send Round Video (Video Note / PTV)
           try {  
               const roundVideo = await getRoundVideo();  
               if (roundVideo) {
@@ -152,7 +148,21 @@ module.exports = {
               console.error("[PING ROUND VIDEO ERROR]", roundError.message);  
           }  
 
-          // 2. Send Gift Video with Caption
+          // 2. Button Configuration
+          const buttons = [
+              {
+                  buttonId: ".menu",
+                  buttonText: { displayText: "📜 MENU" },
+                  type: 1
+              },
+              {
+                  buttonId: ".owner",
+                  buttonText: { displayText: "👨‍💻 OWNER" },
+                  type: 1
+              }
+          ];
+
+          // 3. Send Gift Video with Caption and Buttons
           try {  
               const video = await getGiftVideo();  
               if (video) {
@@ -162,7 +172,10 @@ module.exports = {
                           video: video,  
                           mimetype: "video/mp4",  
                           gifPlayback: true,  
-                          caption: message  
+                          caption: message,
+                          footer: "ZANTA-XMD SYSTEM",
+                          buttons: buttons,
+                          headerType: 4
                       },  
                       { quoted: msg }  
                   );  
@@ -172,8 +185,17 @@ module.exports = {
               console.error("[PING GIFT VIDEO ERROR]", videoError.message);  
           }  
 
-          // Fallback: If both videos fail, send text message only
-          await sock.sendMessage(from, { text: message }, { quoted: msg });
+          // Fallback: Text + Buttons if video fails
+          await sock.sendMessage(
+              from, 
+              { 
+                  text: message,
+                  footer: "ZANTA-XMD SYSTEM",
+                  buttons: buttons,
+                  headerType: 1
+              }, 
+              { quoted: msg }
+          );
 
       } catch (error) {  
           console.error("[PING COMMAND ERROR]", error);  
