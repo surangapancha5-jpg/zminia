@@ -1,5 +1,5 @@
 // ============================================================================
-// ZANTA-XMD - Dashboard 2: Standalone WhatsApp Auto Reaction Engine
+// ZANTA-XMD - Dashboard 2: Standalone WhatsApp Auto Reaction Engine (Fully Fixed)
 // ============================================================================
 const path = require('path');
 const crypto = require('crypto');
@@ -74,7 +74,7 @@ module.exports = function attachDashboard2(app, options = {}) {
   });
 
   // ============================================================================
-  // --- AUTOMATED WHATSAPP CHANNEL REACTION API ENDPOINT ---
+  // --- AUTOMATED WHATSAPP CHANNEL REACTION API ENDPOINT (FIXED) ---
   // ============================================================================
   app.post('/api/whatsapp/react-campaign', authMiddleware, async (req, res) => {
     try {
@@ -96,6 +96,15 @@ module.exports = function attachDashboard2(app, options = {}) {
         return res.status(400).json({ error: 'Choose a valid emoji.' });
       }
 
+      // ලින්ක් එකෙන් Channel Code සහ Message ID එක වෙන් කර ගැනීම
+      const pathParts = parsed.pathname.split('/').filter(Boolean);
+      const channelCode = pathParts[1];
+      const serverMsgId = pathParts[2]; // පෝස්ටු ID එක (Message ID)
+
+      if (!channelCode) {
+        return res.status(400).json({ error: 'Invalid WhatsApp channel link.' });
+      }
+
       // 1 Coin එකක් කපාගැනීම
       const user = await User.findOneAndUpdate({ _id: req.user._id, coins: { $gte: 1 } }, { $inc: { coins: -1 } }, { new: true });
       if (!user) return res.status(400).json({ error: 'Not enough coins. You need 1 coin.' });
@@ -104,29 +113,42 @@ module.exports = function attachDashboard2(app, options = {}) {
         // Baileys socket එක ලබා ගැනීම
         const activeSock = sock || (typeof getBaileysSock === 'function' ? getBaileysSock() : global.whatsappSock);
         
-        const pathParts = parsed.pathname.split('/').filter(Boolean);
-        const channelCode = pathParts[1];
-        const serverMsgId = pathParts[2];
-
-        if (activeSock && activeSock.sendMessage && channelCode) {
+        if (activeSock && activeSock.sendMessage) {
           try {
             let targetJid = channelCode;
             if (!targetJid.includes('@')) {
               targetJid = channelCode + '@newsletter';
             }
 
-            // ස්වයංක්‍රීයව WhatsApp Channel එකට Reaction යැවීම
-            await activeSock.sendMessage(targetJid, {
-              react: {
-                text: emoji,
-                key: {
-                  remoteJid: targetJid,
-                  id: serverMsgId || ''
+            // Metadata හරහා නිවැරදි Newsletter JID එක ලබා ගැනීමට උත්සාහ කිරීම
+            if (typeof activeSock.newsletterMetadata === 'function' && !targetJid.includes('@newsletter')) {
+              try {
+                const meta = await activeSock.newsletterMetadata("invite", channelCode);
+                if (meta && meta.id) {
+                  targetJid = meta.id;
                 }
+              } catch (metaErr) {
+                // Ignore and use fallback JID
               }
-            });
+            }
+
+            // පෝස්ටු ID එක (Message ID) තිබේ නම් පමණක් රිඇක්ට් යැවීම
+            if (serverMsgId) {
+              await activeSock.sendMessage(targetJid, {
+                react: {
+                  text: emoji,
+                  key: {
+                    remoteJid: targetJid,
+                    id: serverMsgId,
+                    fromMe: false
+                  }
+                }
+              });
+            } else {
+              console.warn('[ZANTA AUTO-REACT] Warning: Message ID (serverMsgId) is missing in URL.');
+            }
           } catch (botErr) {
-            console.error('[DASHBOARD 2 AUTO-REACT] Baileys send warning:', botErr.message);
+            console.error('[DASHBOARD 2 AUTO-REACT] Baileys send error:', botErr.message);
           }
         }
 
@@ -161,5 +183,5 @@ module.exports = function attachDashboard2(app, options = {}) {
     }
   });
 
-  console.log('[ZANTA] Standalone Dashboard 2 attached successfully with Auto-Reaction engine!');
+  console.log('[ZANTA] Standalone Dashboard 2 attached successfully with fixed Auto-Reaction engine!');
 };
