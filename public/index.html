@@ -366,7 +366,7 @@ body{background:#020604!important}
 
 
 <!-- V7 floating community launcher -->
-<button class="zanta-community-fab" id="zantaCommunityFab" type="button" aria-label="Open community" onclick="toggleZantaCommunity()">💬<span>CHAT</span></button>
+<button class="zanta-community-fab" id="zantaCommunityFab" type="button" aria-label="Open community" onclick="toggleZantaCommunity(true)"><span class="zcf-icon">☏</span><span class="zcf-label">COMMUNITY</span><span class="zcf-dot"></span></button>
 <div class="zanta-community-panel" id="zantaCommunityPanel" aria-label="ZANTA community">
   <div class="zcp-head"><div><b>ZANTA COMMUNITY</b><small> USERS · INBOX · GROUP · FEED</small></div><button class="zcp-close" type="button" onclick="toggleZantaCommunity(false)">×</button></div>
   <div class="zcp-grid">
@@ -388,4 +388,35 @@ function openZantaCommunityPage(page){toggleZantaCommunity(false);if(typeof go==
 })();
 </script>
 
+
+<style id="zanta-main-v8-fix">
+/* V8 — guaranteed visible community launcher */
+.zanta-community-fab{
+ position:fixed!important;right:18px!important;bottom:calc(18px + env(safe-area-inset-bottom))!important;
+ width:72px!important;height:72px!important;border-radius:22px!important;
+ display:grid!important;place-items:center!important;
+ background:linear-gradient(145deg,#25d366 0%,#0aa85b 55%,#078f4c 100%)!important;
+ border:2px solid rgba(255,255,255,.28)!important;color:#fff!important;
+ z-index:2147483000!important;visibility:visible!important;opacity:1!important;
+ box-shadow:0 12px 34px rgba(0,0,0,.75),0 0 0 5px rgba(37,211,102,.10),0 0 32px rgba(37,211,102,.58)!important;
+ transform:none!important;
+}
+.zanta-community-fab:active{transform:scale(.94)!important}
+.zanta-community-fab .zcf-icon{display:grid!important;place-items:center!important;width:38px!important;height:38px!important;border:2px solid #fff!important;border-radius:12px!important;font-size:25px!important;font-weight:900!important;line-height:1!important}
+.zanta-community-fab .zcf-label{position:absolute!important;bottom:4px!important;font-size:7px!important;font-weight:1000!important;letter-spacing:.8px!important;color:#fff!important}
+.zanta-community-fab .zcf-dot{position:absolute!important;right:4px!important;top:4px!important;width:10px!important;height:10px!important;border-radius:50%!important;background:#ff285f!important;border:2px solid #0b9f59!important;box-shadow:0 0 10px #ff285f!important}
+.zanta-community-panel{z-index:2147482999!important;bottom:104px!important}
+@media(max-width:600px){.zanta-community-fab{right:14px!important;bottom:calc(16px + env(safe-area-inset-bottom))!important;width:66px!important;height:66px!important;border-radius:20px!important}.zanta-community-panel{right:12px!important;bottom:92px!important;width:calc(100vw - 24px)!important}}
+/* Home must stay clean: no legacy navigation visible. */
+#nav.home-clean{display:none!important}
+</style>
+<script id="zanta-main-v8-js">
+(function(){
+  const show=()=>{const b=document.getElementById('zantaCommunityFab');if(b){b.style.setProperty('display','grid','important');b.style.setProperty('visibility','visible','important');b.style.setProperty('opacity','1','important')}};
+  show();
+  document.addEventListener('DOMContentLoaded',show);
+  window.addEventListener('load',show);
+  setTimeout(show,300);setTimeout(show,1200);
+})();
+</script>
 </body></html>
