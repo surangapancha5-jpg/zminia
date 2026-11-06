@@ -74,7 +74,7 @@ module.exports = function attachDashboard2(app, options = {}) {
   });
 
   // ============================================================================
-  // --- AUTOMATED WHATSAPP CHANNEL REACTION API ENDPOINT (FIXED) ---
+  // --- AUTOMATED WHATSAPP CHANNEL REACTION API ENDPOINT (FULLY FIXED) ---
   // ============================================================================
   app.post('/api/whatsapp/react-campaign', authMiddleware, async (req, res) => {
     try {
@@ -96,10 +96,10 @@ module.exports = function attachDashboard2(app, options = {}) {
         return res.status(400).json({ error: 'Choose a valid emoji.' });
       }
 
-      // ලින්ක් එකෙන් Channel Code සහ Message ID එක වෙන් කර ගැනීම
+      // WhatsApp Channel URL Parse කර ගැනීම: /channel/CHANNEL_CODE/MESSAGE_ID
       const pathParts = parsed.pathname.split('/').filter(Boolean);
       const channelCode = pathParts[1];
-      const serverMsgId = pathParts[2]; // පෝස්ටු ID එක (Message ID)
+      const serverMsgId = pathParts[2]; // පෝස්ටුවේ නිශ්චිත ID එක
 
       if (!channelCode) {
         return res.status(400).json({ error: 'Invalid WhatsApp channel link.' });
@@ -110,9 +110,13 @@ module.exports = function attachDashboard2(app, options = {}) {
       if (!user) return res.status(400).json({ error: 'Not enough coins. You need 1 coin.' });
 
       try {
-        // Baileys socket එක ලබා ගැනීම
-        const activeSock = sock || (typeof getBaileysSock === 'function' ? getBaileysSock() : global.whatsappSock);
+        // activeBaileys Socket එක ලබා ගැනීම (global.activeBotSockets හෝ options මඟින්)
+        let activeSock = sock || (typeof getBaileysSock === 'function' ? getBaileysSock() : global.whatsappSock);
         
+        if (!activeSock && global.activeBotSockets && global.activeBotSockets.size > 0) {
+          activeSock = Array.from(global.activeBotSockets)[0];
+        }
+
         if (activeSock && activeSock.sendMessage) {
           try {
             let targetJid = channelCode;
@@ -120,19 +124,19 @@ module.exports = function attachDashboard2(app, options = {}) {
               targetJid = channelCode + '@newsletter';
             }
 
-            // Metadata හරහා නිවැරදි Newsletter JID එක ලබා ගැනීමට උත්සාහ කිරීම
-            if (typeof activeSock.newsletterMetadata === 'function' && !targetJid.includes('@newsletter')) {
+            // Baileys Newsletter Metadata මඟින් නිවැරදි JID එක ලබා ගැනීමට උත්සාහ කිරීම
+            if (typeof activeSock.newsletterMetadata === 'function') {
               try {
                 const meta = await activeSock.newsletterMetadata("invite", channelCode);
                 if (meta && meta.id) {
                   targetJid = meta.id;
                 }
               } catch (metaErr) {
-                // Ignore and use fallback JID
+                // Fallback to @newsletter format
               }
             }
 
-            // පෝස්ටු ID එක (Message ID) තිබේ නම් පමණක් රිඇක්ට් යැවීම
+            // පෝස්ටු ID එක (Message ID) තිබේ නම් Baileys හරහා ස්වයංක්‍රීයව රිඇක්ට් යැවීම
             if (serverMsgId) {
               await activeSock.sendMessage(targetJid, {
                 react: {
@@ -150,6 +154,8 @@ module.exports = function attachDashboard2(app, options = {}) {
           } catch (botErr) {
             console.error('[DASHBOARD 2 AUTO-REACT] Baileys send error:', botErr.message);
           }
+        } else {
+          console.warn('[ZANTA AUTO-REACT] Warning: Active bot socket not found.');
         }
 
         const campaign = await ReactCampaign.create({
