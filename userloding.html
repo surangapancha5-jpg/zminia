@@ -1,1 +1,217 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#050914"><title>ZANTA-XMD · Loading</title><style>*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;font-family:Inter,system-ui,Arial;background:#050914;color:#edf7ff}body{display:grid;place-items:center;overflow:hidden;background:radial-gradient(ellipse at 50% 42%,#102c4b 0,#091426 42%,#050914 78%)}.glow{position:absolute;width:270px;height:270px;border-radius:50%;background:#08b9ff22;filter:blur(65px);animation:breathe 2.8s ease-in-out infinite}.box{position:relative;text-align:center;padding:35px 25px;width:min(90%,420px)}.logo{width:76px;height:76px;margin:0 auto 23px;border-radius:24px;display:grid;place-items:center;font-size:38px;font-weight:950;color:white;background:linear-gradient(145deg,#087cff,#10d5e8);box-shadow:0 0 45px #00bfff55, inset 0 1px 0 #ffffff77;animation:float 2.4s ease-in-out infinite}.tag{font-size:10px;letter-spacing:3px;font-weight:800;color:#63dfff}h1{font-size:27px;letter-spacing:1px;margin:12px 0 8px}p{font-size:13px;color:#91a9c4;margin:0 0 31px}.track{height:4px;width:190px;margin:auto;border-radius:10px;background:#1a2d45;overflow:hidden}.bar{height:100%;width:40%;border-radius:10px;background:linear-gradient(90deg,#168bff,#4deaff);box-shadow:0 0 14px #24cfff;animation:load 1.5s ease-in-out infinite}.dots{margin-top:20px;color:#7294b7;font-size:10px;letter-spacing:3px}@keyframes load{0%{transform:translateX(-110%)}100%{transform:translateX(360%)}}@keyframes float{50%{transform:translateY(-7px) scale(1.03)}}@keyframes breathe{50%{transform:scale(1.25);opacity:.6}}</style></head><body><div class="glow"></div><main class="box"><div class="logo">Z</div><div class="tag">USER PORTAL</div><h1>ZANTA-XMD</h1><p>Your digital space is getting ready</p><div class="track"><div class="bar"></div></div><div class="dots">LOADING&nbsp; · &nbsp;PLEASE WAIT</div></main></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#000000">
+<title>ZANTA-XMD · Loading</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;950&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    font-family: 'Inter', system-ui, Arial, sans-serif;
+    background: #000000;
+    color: #f0f6fc;
+    overflow: hidden;
+  }
+  body {
+    display: grid;
+    place-items: center;
+    background: radial-gradient(circle at 50% 40%, #03162b 0%, #000914 55%, #000000 90%);
+  }
+  
+  /* Background Glowing Animation */
+  .glow-container {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    display: grid;
+    place-items: center;
+    overflow: hidden;
+    z-index: 1;
+    pointer-events: none;
+  }
+  .glow-circle {
+    position: absolute;
+    width: 320px;
+    height: 320px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(0, 149, 255, 0.18), rgba(0, 229, 255, 0.05));
+    filter: blur(80px);
+    animation: pulseGlow 4s ease-in-out infinite;
+  }
+  .glow-ring {
+    position: absolute;
+    width: 240px;
+    height: 240px;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 212, 255, 0.15);
+    box-shadow: 0 0 30px rgba(0, 149, 255, 0.1);
+    animation: rotateRing 10s linear infinite;
+  }
+
+  /* Main Box */
+  .box {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    padding: 40px 30px;
+    width: min(90%, 440px);
+    background: rgba(3, 11, 24,  0.65);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(0, 212, 255, 0.15);
+    border-radius: 28px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 40px rgba(0, 149, 255, 0.12);
+    animation: fadeInUp 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  /* Animated Logo */
+  .logo-wrapper {
+    position: relative;
+    width: 84px;
+    height: 84px;
+    margin: 0 auto 24px;
+  }
+  .logo-glow {
+    position: absolute;
+    inset: -6px;
+    background: linear-gradient(90deg, #0051ff, #00d4ff);
+    border-radius: 28px;
+    filter: blur(12px);
+    opacity: 0.7;
+    animation: logoGlowAnim 2.5s ease-in-out infinite;
+  }
+  .logo {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 24px;
+    display: grid;
+    place-items: center;
+    font-size: 42px;
+    font-weight: 950;
+    color: #ffffff;
+    background: linear-gradient(145deg, #0066ff, #00e1ff);
+    box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.4), inset 0 -4px 8px rgba(0, 0, 0, 0.3);
+    animation: floatLogo 3s ease-in-out infinite;
+  }
+
+  /* Typography */
+  .tag {
+    font-size: 11px;
+    letter-spacing: 4px;
+    font-weight: 800;
+    color: #00d4ff;
+    text-shadow: 0 0 10px rgba(0, 212, 255, 0.4);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+  }
+  h1 {
+    font-size: 28px;
+    letter-spacing: 1.5px;
+    margin: 0 0 10px;
+    font-weight: 950;
+    background: linear-gradient(180deg, #ffffff, #93c5fd);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  p {
+    font-size: 13px;
+    color: #8ba2cb;
+    margin: 0 0 35px;
+    font-weight: 500;
+  }
+
+  /* Progress Track & Bar */
+  .track {
+    height: 6px;
+    width: 210px;
+    margin: 0 auto;
+    border-radius: 20px;
+    background: rgba(13, 31, 60, 0.8);
+    overflow: hidden;
+    position: relative;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
+  }
+  .bar {
+    height: 100%;
+    width: 50%;
+    border-radius: 20px;
+    background: linear-gradient(90deg, #0051ff, #00f0ff);
+    box-shadow: 0 0 18px #00d4ff, 0 0 5px #0051ff;
+    animation: loadBar 1.8s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+  }
+
+  /* Loading Dots Text */
+  .dots {
+    margin-top: 24px;
+    color: #5a7fa8;
+    font-size: 10px;
+    letter-spacing: 4px;
+    font-weight: 700;
+    animation: blinkText 1.5s ease-in-out infinite;
+  }
+
+  /* Keyframe Animations */
+  @keyframes loadBar {
+    0% { transform: translateX(-120%); }
+    50% { transform: translateX(120%); }
+    100% { transform: translateX(320%); }
+  }
+  @keyframes floatLogo {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-8px) scale(1.04); }
+  }
+  @keyframes logoGlowAnim {
+    0%, 100% { opacity: 0.5; transform: scale(0.96); }
+    50% { opacity: 0.9; transform: scale(1.06); }
+  }
+  @keyframes pulseGlow {
+    0%, 100% { transform: scale(1); opacity: 0.4; }
+    50% { transform: scale(1.25); opacity: 0.8; }
+  }
+  @keyframes rotateRing {
+    0% { transform: rotate(0deg) scale(1); }
+    50% { transform: rotate(180deg) scale(1.08); }
+    100% { transform: rotate(360deg) scale(1); }
+  }
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @keyframes blinkText {
+    0%, 100% { opacity: 0.4; }
+    50% { opacity: 1; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="glow-container">
+    <div class="glow-circle"></div>
+    <div class="glow-ring"></div>
+  </div>
+
+  <main class="box">
+    <div class="logo-wrapper">
+      <div class="logo-glow"></div>
+      <div class="logo">Z</div>
+    </div>
+    
+    <div class="tag">ZANTA-XMD SYSTEM</div>
+    <h1>ESTABLISHING LINK</h1>
+    <p>Preparing your high-performance digital workspace...</p>
+    
+    <div class="track">
+      <div class="bar"></div>
+    </div>
+    
+    <div class="dots">INITIALIZING&nbsp; · &nbsp;PLEASE WAIT</div>
+  </main>
+
+</body>
+</html>
