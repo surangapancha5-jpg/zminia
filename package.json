@@ -1,31 +1,260 @@
-{
-  "name": "zanta-xmd",
-  "version": "2.2.0",
-  "description": "ZANTA-XMD WhatsApp Bot with Web Pairing UI & MongoDB Session",
-  "main": "index.js",
-  "scripts": {
-    "start": "node --max-old-space-size=450 index.js"
-  },
-  "dependencies": {
-    "@ffmpeg-installer/ffmpeg": "^1.1.0",
-    "@whiskeysockets/baileys": "https://github.com/WhiskeySockets/Baileys.git",
-    "axios": "^1.7.9",
-    "chalk": "^4.1.2",
-    "dotenv": "^16.4.7",
-    "emoji-mixer": "^1.3.1",
-    "express": "^4.21.2",
-    "form-data": "^4.0.1",
-    "gifted-dls": "^1.1.8",
-    "mongoose": "^9.1.0",
-    "nodemailer": "^6.9.16",
-    "pino": "^9.6.0",
-    "qrcode": "^1.5.4",
-    "qrcode-terminal": "^0.12.0",
-    "sharp": "^0.34.0",
-    "youtube-dl-exec": "^3.1.15",
-    "yt-search": "^2.12.1"
-  },
-  "engines": {
-    "node": ">=20.x"
-  }
+const axios = require("axios");
+
+const GIFT_VIDEO =
+    "https://res.cloudinary.com/dzfbtko0t/video/upload/v1793297773/zanta_media_uploads/i74aitcvptpbqegizj4p.mp4";
+
+const ROUND_VIDEO =
+    "https://res.cloudinary.com/dzfbtko0t/video/upload/v1793441357/zanta_media_uploads/fywcjhso98ylcb7axtiv.mp4";
+
+const MAX_VIDEO_SIZE = 25 * 1024 * 1024;
+
+// Video Cache
+let videoCache = null;
+let roundVideoCache = null;
+
+let videoPromise = null;
+let roundVideoPromise = null;
+
+// Download Video
+async function downloadVideo(url) {
+    const response = await axios.get(url, {
+        responseType: "arraybuffer",
+        timeout: 60000,
+        maxContentLength: MAX_VIDEO_SIZE,
+        maxBodyLength: MAX_VIDEO_SIZE,
+        headers: {
+            "User-Agent": "Mozilla/5.0",
+            "Accept": "video/mp4,*/*"
+        }
+    });
+
+    const buffer = Buffer.from(response.data);
+
+    if (!buffer.length) {
+        throw new Error("Empty video response");
+    }
+
+    if (buffer.length > MAX_VIDEO_SIZE) {
+        throw new Error("Video exceeds 25MB limit");
+    }
+
+    if (
+        buffer.length < 12 ||
+        buffer.toString("ascii", 4, 8) !== "ftyp"
+    ) {
+        throw new Error("Invalid MP4 video response");
+    }
+
+    return buffer;
 }
+
+// Get Gift Video
+async function getGiftVideo() {
+    if (videoCache) return videoCache;
+
+    if (!videoPromise) {
+        videoPromise = downloadVideo(GIFT_VIDEO)
+            .then(buffer => {
+                videoCache = buffer;
+                return buffer;
+            })
+            .finally(() => {
+                videoPromise = null;
+            });
+    }
+
+    return videoPromise;
+}
+
+// Get Round Video
+async function getRoundVideo() {
+    if (roundVideoCache) return roundVideoCache;
+
+    if (!roundVideoPromise) {
+        roundVideoPromise = downloadVideo(ROUND_VIDEO)
+            .then(buffer => {
+                roundVideoCache = buffer;
+                return buffer;
+            })
+            .finally(() => {
+                roundVideoPromise = null;
+            });
+    }
+
+    return roundVideoPromise;
+}
+
+// Format Uptime
+function formatUptime(seconds) {
+    const d = Math.floor(seconds / 86400);
+    const h = Math.floor((seconds % 86400) / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = Math.floor(seconds % 60);
+
+    return `${d}d ${h}h ${m}m ${s}s`;
+}
+
+// Total Commands
+function getTotalCommands() {
+    const commands = global.commands;
+
+    if (commands instanceof Map) return commands.size;
+
+    if (Array.isArray(commands)) return commands.length;
+
+    if (commands && typeof commands === "object") {
+        return Object.keys(commands).length;
+    }
+
+    return 0;
+}
+
+// Ping Command
+module.exports = {
+    name: "ping",
+    alias: ["speed", "pong"],
+    desc: "ZANTA-XMD Ping Status",
+    category: "main",
+    use: ".ping",
+
+    async execute(sock, msg, args, from, { reply }) {
+        const start = Date.now();
+
+        try {
+            const totalCmds = getTotalCommands();
+
+            const timestamp = Number(msg.messageTimestamp);
+
+            const speed = timestamp
+                ? Math.max(0, start - timestamp * 1000)
+                : 0;
+
+            const message =
+`╭━━〔 *𝐙𝐀𝐍𝐓𝐀-𝐗𝐌𝐃* 〕━━┈⊷
+┃◈╭─────────────·๏
+┃◈┃• *🤠 𝐇𝐞𝐥𝐥𝐨:* ${msg.pushName || "User"}
+┃◈┃• *🪪 𝐕𝐞𝐫𝐬𝐢𝐨𝐧:* *2.2.0*
+┃◈└───────────┈⊷
+╰──────────────┈⊷
+
+╭━━〔 *𝐁𝐎𝐓 𝐒𝐓𝐀𝐓𝐔𝐒* 〕━━┈⊷
+┃◈╭─────────────·๏
+┃◈┃⛩️ *𝐒𝐓𝐀𝐓𝐔𝐒:* ONLINE 🟢
+┃◈┃
+┃◈┃⛩️ *𝐒𝐏𝐄𝐄𝐃:* ${speed}ms
+┃◈┃
+┃◈┃⛩️ *𝐔𝐏𝐓𝐈𝐌𝐄:* ${formatUptime(process.uptime())}
+┃◈┃
+┃◈┃⛩️ *𝐂𝐎𝐌𝐌𝐀𝐍𝐃𝐒:* ${totalCmds}+
+┃◈┃
+┃◈┃⛩️ *𝐎𝐖𝐍𝐄𝐑:* 𝙼𝚁 𝚂𝚄𝚁𝙰𝙽𝙶𝙰 𝙼𝙾𝙳-𝚉
+┃◈└───────────┈⊷
+╰──────────────┈⊷
+
+> 𝐙𝐀𝐍𝐓𝐀-𝐗𝐌𝐃 𝐎𝐅𝐂`;
+
+            // 1. Send Round Video Note
+            try {
+                const roundVideo = await getRoundVideo();
+
+                await sock.sendMessage(
+                    from,
+                    {
+                        video: roundVideo,
+                        mimetype: "video/mp4",
+                        ptv: true
+                    },
+                    {
+                        quoted: msg
+                    }
+                );
+
+            } catch (error) {
+                console.error(
+                    "[PING ROUND VIDEO ERROR]",
+                    error
+                );
+            }
+
+            // 2. Send Gift Video
+            try {
+                const giftVideo = await getGiftVideo();
+
+                await sock.sendMessage(
+                    from,
+                    {
+                        video: giftVideo,
+                        mimetype: "video/mp4",
+                        gifPlayback: true,
+                        caption: message
+                    },
+                    {
+                        quoted: msg
+                    }
+                );
+
+            } catch (error) {
+                console.error(
+                    "[PING GIFT VIDEO ERROR]",
+                    error
+                );
+
+                // Fallback Text Message
+                await sock.sendMessage(
+                    from,
+                    {
+                        text: message
+                    },
+                    {
+                        quoted: msg
+                    }
+                );
+            }
+
+            // 3. Send PING Button
+            try {
+                await sock.sendMessage(
+                    from,
+                    {
+                        text: "⚡ *ZANTA-XMD PING CONTROL*",
+                        footer: "𝐙𝐀𝐍𝐓𝐀-𝐗𝐌𝐃 𝐎𝐅𝐂",
+                        buttons: [
+                            {
+                                buttonId: ".ping",
+                                buttonText: {
+                                    displayText: "⚡ PING"
+                                },
+                                type: 1
+                            }
+                        ],
+                        headerType: 1
+                    },
+                    {
+                        quoted: msg
+                    }
+                );
+
+            } catch (buttonError) {
+                console.error(
+                    "[PING BUTTON ERROR]",
+                    buttonError
+                );
+            }
+
+        } catch (error) {
+            console.error("[PING COMMAND ERROR]", error);
+
+            try {
+                await reply(
+                    "❌ PING ERROR!\nError: " +
+                    error.message
+                );
+            } catch (replyError) {
+                console.error(
+                    "[PING REPLY ERROR]",
+                    replyError
+                );
+            }
+        }
+    }
+};
