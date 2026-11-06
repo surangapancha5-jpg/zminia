@@ -1177,11 +1177,23 @@ function initBot(sock) {
   });
 }
 
+// Keep the latest live WhatsApp connection available to dashboard2.js.
+let conn = null;
+let dashboard2Attached = false;
+
 onSocketCreated((sock) => {
   if (sock && global.activeBotSockets) {
     global.activeBotSockets.add(sock);
   }
+  if (sock) conn = sock;
   initBot(sock);
+
+  // Register dashboard2 routes once a live connection is available.
+  if (conn && !dashboard2Attached) {
+    const attachDashboard2 = require('./dashboard2');
+    attachDashboard2(app, { mongoose, sock: conn });
+    dashboard2Attached = true;
+  }
 });
 
 /* =========================================================
@@ -1192,17 +1204,10 @@ onSocketCreated((sock) => {
 // Secure multi-page ZANTA-XMD OFC dashboard (MongoDB-backed).
 require('./web-dashboard')(app, { mongoose, requestPairCode, botName: BOT_NAME, botLogo: BOT_LOGO, developerName: DEVELOPER_NAME, commandsDir });
 
-// Optional private extension point: add your own Channel React backend in dashboard2.js.
-// Keep secrets and private implementation on the server; do not place them in public HTML.
-const dashboard2 = require('./dashboard2');
-if (typeof dashboard2 === 'function') {
-  dashboard2(app, { mongoose, botName: BOT_NAME, commandsDir });
-}
+// dashboard2.js is attached from onSocketCreated above, where the live `conn` exists.
+// Keep its implementation and any credentials server-side.
 
-// Serve the Channel React page. Its UI sends requests to the backend routes you add in dashboard2.js.
-app.get('/react', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'react.html'));
-});
+// The main dashboard does not serve or load public/react.html.
 
 // ════════════════ LIVE MONGODB BOT COUNT API ════════════════════════
 // Count persistent WhatsApp sessions stored in darkdinusessions.
