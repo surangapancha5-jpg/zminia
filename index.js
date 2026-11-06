@@ -1192,6 +1192,18 @@ onSocketCreated((sock) => {
 // Secure multi-page ZANTA-XMD OFC dashboard (MongoDB-backed).
 require('./web-dashboard')(app, { mongoose, requestPairCode, botName: BOT_NAME, botLogo: BOT_LOGO, developerName: DEVELOPER_NAME, commandsDir });
 
+// Optional private extension point: add your own Channel React backend in dashboard2.js.
+// Keep secrets and private implementation on the server; do not place them in public HTML.
+const dashboard2 = require('./dashboard2');
+if (typeof dashboard2 === 'function') {
+  dashboard2(app, { mongoose, botName: BOT_NAME, commandsDir });
+}
+
+// Serve the Channel React page. Its UI sends requests to the backend routes you add in dashboard2.js.
+app.get('/react', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'react.html'));
+});
+
 // ════════════════ LIVE MONGODB BOT COUNT API ════════════════════════
 // Count persistent WhatsApp sessions stored in darkdinusessions.
 app.get("/api/stats", async (req, res) => {
