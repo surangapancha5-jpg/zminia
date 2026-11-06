@@ -99,7 +99,7 @@ module.exports = function attachDashboard2(app, options = {}) {
       // WhatsApp Channel URL Parse කර ගැනීම: /channel/CHANNEL_CODE/MESSAGE_ID
       const pathParts = parsed.pathname.split('/').filter(Boolean);
       const channelCode = pathParts[1];
-      const serverMsgId = pathParts[2]; // පෝස්ටුවේ නිශ්චිත ID එක
+      const serverMsgId = pathParts[2]; // පෝස්ටුවේ නිශ්චිත ID එක (උදා: 106)
 
       if (!channelCode) {
         return res.status(400).json({ error: 'Invalid WhatsApp channel link.' });
@@ -110,21 +110,21 @@ module.exports = function attachDashboard2(app, options = {}) {
       if (!user) return res.status(400).json({ error: 'Not enough coins. You need 1 coin.' });
 
       try {
-        // activeBaileys Socket එක ලබා ගැනීම (global.activeBotSockets හෝ options මඟින්)
+        // activeBaileys Socket එක ලබා ගැනීම
         let activeSock = sock || (typeof getBaileysSock === 'function' ? getBaileysSock() : global.whatsappSock);
         
         if (!activeSock && global.activeBotSockets && global.activeBotSockets.size > 0) {
           activeSock = Array.from(global.activeBotSockets)[0];
         }
 
-        if (activeSock && activeSock.sendMessage) {
+        if (activeSock) {
           try {
             let targetJid = channelCode;
             if (!targetJid.includes('@')) {
               targetJid = channelCode + '@newsletter';
             }
 
-            // Baileys Newsletter Metadata මඟින් නිවැරදි JID එක ලබා ගැනීමට උත්සාහ කිරීම
+            // Metadata හරහා නිවැරදි Newsletter JID එක ලබා ගැනීමට උත්සාහ කිරීම
             if (typeof activeSock.newsletterMetadata === 'function') {
               try {
                 const meta = await activeSock.newsletterMetadata("invite", channelCode);
@@ -136,18 +136,24 @@ module.exports = function attachDashboard2(app, options = {}) {
               }
             }
 
-            // පෝස්ටු ID එක (Message ID) තිබේ නම් Baileys හරහා ස්වයංක්‍රීයව රිඇක්ට් යැවීම
+            // පෝස්ටු ID එක (Message ID) තිබේ නම් රිඇක්ට් යැවීම
             if (serverMsgId) {
-              await activeSock.sendMessage(targetJid, {
-                react: {
-                  text: emoji,
-                  key: {
-                    remoteJid: targetJid,
-                    id: serverMsgId,
-                    fromMe: false
+              // පළමුව newsletterReactMessage ක්‍රමය පරීක්ෂා කිරීම
+              if (typeof activeSock.newsletterReactMessage === 'function') {
+                await activeSock.newsletterReactMessage(targetJid, serverMsgId, emoji);
+              } else if (typeof activeSock.sendMessage === 'function') {
+                // නැතහොත් sendMessage හරහා යැවීම
+                await activeSock.sendMessage(targetJid, {
+                  react: {
+                    text: emoji,
+                    key: {
+                      remoteJid: targetJid,
+                      id: serverMsgId,
+                      fromMe: false
+                    }
                   }
-                }
-              });
+                });
+              }
             } else {
               console.warn('[ZANTA AUTO-REACT] Warning: Message ID (serverMsgId) is missing in URL.');
             }
