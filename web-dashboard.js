@@ -49,7 +49,7 @@ module.exports = function attachDashboard(app, options) {
   app.get('/user-dashboard.html', async (req, res) => {
     try {
       const saved = await Config.findOne({ key: 'userDashboardHtml' }).lean();
-      if (saved && typeof saved.value === 'string' && saved.value.trim()) {
+      if (saved && typeof saved.value === 'string' && saved.value.trim() && /data-zanta-dashboard-version=\"6\"/i.test(saved.value)) {
         res.set('Content-Type', 'text/html; charset=utf-8');
         res.set('Cache-Control', 'no-store');
         return res.status(200).send(saved.value);
