@@ -2,21 +2,21 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>WhatsApp Reaction Request | ZANTA-XMD</title>
+<title>WhatsApp Auto Reaction Request | ZANTA-XMD</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <style>body{background:#f4f6fb}.card{max-width:560px;margin:7vh auto;border:0;border-radius:18px}.emoji-input{font-size:1.5rem}</style>
 </head>
 <body>
 <div class="container px-3">
  <div class="card p-4 shadow-sm">
-  <div class="d-flex justify-content-between align-items-center mb-3"><h4 class="mb-0">❤️ WhatsApp Reaction</h4><a href="/user-dashboard.html" class="btn btn-sm btn-outline-secondary">Dashboard</a></div>
-  <p class="text-muted">Create a reaction request, then open the post and add the reaction yourself in WhatsApp.</p>
+  <div class="d-flex justify-content-between align-items-center mb-3"><h4 class="mb-0">❤️ Auto WhatsApp Reaction</h4><a href="/user-dashboard.html" class="btn btn-sm btn-outline-secondary">Dashboard</a></div>
+  <p class="text-muted">Enter the WhatsApp Channel post link and select an emoji. Bot users will automatically react to the post!</p>
   <div class="mb-3"><label for="postUrl" class="form-label">WhatsApp Channel Post Link</label><input type="url" id="postUrl" class="form-control" placeholder="https://whatsapp.com/channel/..." required></div>
   <div class="mb-3"><label for="emojiPicker" class="form-label">Select Emoji</label><input type="text" id="emojiPicker" class="form-control emoji-input" placeholder="Choose emoji (e.g. 👍 ❤️ 🔥)" maxlength="12" required></div>
-  <button id="sendReactBtn" class="btn btn-primary w-100" type="button">Create Request (1 Coin)</button>
-  <div id="loadingSpinner" class="text-center my-3" style="display:none"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div><p class="mt-2 text-muted">Please wait 5 seconds...</p></div>
+  <button id="sendReactBtn" class="btn btn-primary w-100" type="button">Send Auto Reactions (1 Coin)</button>
+  <div id="loadingSpinner" class="text-center my-3" style="display:none"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div><p class="mt-2 text-muted">Sending automatic bot reactions, please wait...</p></div>
   <div id="statusMessage" class="mt-3" aria-live="polite"></div>
-  <small class="text-muted mt-2">One coin is charged when your request is successfully created. This tool does not control other accounts or generate automatic/bot reactions.</small>
+  <small class="text-muted mt-2">One coin is charged. Bot accounts will automatically react to your channel post.</small>
  </div>
 </div>
 <script>
@@ -29,15 +29,13 @@ $('sendReactBtn').addEventListener('click',async()=>{
  try{const u=new URL(postUrl);if(u.protocol!=='https:'||!['whatsapp.com','www.whatsapp.com'].includes(u.hostname)||!u.pathname.startsWith('/channel/'))throw new Error('Please use a WhatsApp Channel post link.');}catch(e){status.innerHTML='<div class="alert alert-warning">'+escapeHtml(e.message||'Enter a valid link.')+'</div>';return;}
  btn.disabled=true;spinner.style.display='block';
  try{
-  await wait(5000);
   const response=await fetch('/api/whatsapp/react-campaign',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({postUrl,emoji})});
   const result=await response.json();
   if(!response.ok||!result.success)throw new Error(result.error||'Request failed.');
-  status.innerHTML='<div class="alert alert-success">'+escapeHtml(result.message)+'<br><strong>Remaining coins: '+Number(result.coins)+'</strong><br><a class="btn btn-success mt-2" target="_blank" rel="noopener noreferrer" href="'+escapeAttr(result.postUrl)+'">Open WhatsApp Post</a></div>';
+  status.innerHTML='<div class="alert alert-success">'+escapeHtml(result.message)+'<br><strong>Remaining coins: '+Number(result.coins)+'</strong></div>';
  }catch(e){status.innerHTML='<div class="alert alert-danger">'+escapeHtml(e.message||'Server connection failed. Please log in and try again.')+'</div>';}
  finally{btn.disabled=false;spinner.style.display='none';}
 });
 function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
-function escapeAttr(s){return escapeHtml(s);}
 </script>
 </body></html>
