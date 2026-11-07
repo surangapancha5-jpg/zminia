@@ -114,96 +114,11 @@ body{background:#050505!important;color:#f7f7f7}
 @media(max-width:390px){#home>[data-box="tiles"]{grid-template-columns:1fr}.nav button:nth-child(n+7){display:none}}
 
 </style>
-<link rel="stylesheet" href="/zanta-rgb-theme.css">
-<style id="zanta-phone-frame-fix">
-/* Fixed phone-sized canvas: keep the whole site visually like a modern phone display */
-html,body{width:100%;min-width:0;overflow-x:hidden}
-body{display:flex;justify-content:center;background:#02050a}
-.shell{width:100%;max-width:430px;min-width:0;margin:0 auto;padding:14px 10px calc(92px + env(safe-area-inset-bottom))}
-.top{padding:8px 4px 16px}
-.brand{gap:9px;font-size:15px}.logo{width:40px;height:40px;border-radius:13px}
-.card{border-radius:22px;padding:17px}
-#home{width:100%!important;max-width:430px!important;margin:0 auto!important}
-#home>.hero h1{font-size:34px!important}
-#home>[data-box="balance"]{min-height:205px!important;padding:22px!important}
-#home>[data-box="balance"] .coin{font-size:39px!important}
-#home>[data-box="tiles"]{grid-template-columns:repeat(2,minmax(0,1fr))!important}
-.nav{width:min(420px,calc(100% - 14px))!important;max-width:420px!important}
-.zanta-chat-page,.page{width:100%;max-width:430px;margin:0 auto}
-@media(min-width:651px){.shell{max-width:430px}.authgrid{display:block}.nav{left:50%!important;transform:translateX(-50%)}}
-@media(max-width:430px){.shell{padding-left:9px;padding-right:9px}.top{padding-left:2px;padding-right:2px}}
-</style>
-
-<style id="zanta-v10-top-nav">
-/* V10 compact phone-style top navigation */
-body{overflow-x:hidden}.shell{width:min(100%,430px);max-width:430px;margin:0 auto;padding:10px 10px 28px}.zanta-topbar{position:sticky;top:0;z-index:50;padding:8px 2px 12px;margin:0 -2px 6px;background:rgba(3,6,17,.94);backdrop-filter:blur(18px);border-bottom:1px solid rgba(65,198,255,.12)}.top-actions{position:relative;display:flex;align-items:center;gap:5px}.top-main-links{display:flex;align-items:center;gap:4px;margin-right:2px}.top-main-links button,.top-icon-btn{height:34px;border-radius:11px;padding:0 9px;background:linear-gradient(145deg,#101a30,#0a1020);color:#cfe8ff;border:1px solid #254464;font-size:9px;font-weight:900;letter-spacing:.45px;box-shadow:0 0 12px rgba(0,229,255,.08)}.top-main-links button:active,.top-icon-btn:active{transform:scale(.94)}.top-main-links button:first-child{color:#55d8ff;border-color:#167ea5}.top-icon-btn{width:34px;padding:0;display:grid;place-items:center;font-size:16px;color:#9fe9ff}.zanta-topbar .bell-btn{width:38px;height:38px;flex:0 0 38px;margin:0;border-radius:12px}.zanta-topbar .brand{gap:8px;min-width:0}.zanta-topbar .logo{width:38px;height:38px;border-radius:12px;font-size:17px}.zanta-topbar .brand>div:last-child{font-size:12px;white-space:nowrap}.zanta-topbar .tag{font-size:7px;letter-spacing:1.4px}.top-menu{position:absolute;right:0;top:45px;min-width:145px;padding:6px;border-radius:15px;background:rgba(9,15,30,.98);border:1px solid #36577d;box-shadow:0 18px 45px rgba(0,0,0,.65),0 0 22px rgba(168,85,247,.18);z-index:80}.top-menu button{width:100%;display:flex;align-items:center;gap:9px;border:0;background:transparent;color:#eef8ff;padding:11px 12px;border-radius:10px;font-size:12px;font-weight:800;text-align:left}.top-menu button:hover{background:#14253c}.top-menu button span{flex:1}.nav{display:none!important}.foot{display:none!important}.home-clock{margin-top:8px}.user-strip{margin-top:7px}.card.stats{margin-top:14px}.tiles{display:none!important}@media(max-width:360px){.top-main-links button{padding:0 7px;font-size:8px}.zanta-topbar .brand>div:last-child{font-size:10px}.zanta-topbar .tag{font-size:6px}.top-icon-btn{width:32px}.zanta-topbar .bell-btn{width:35px;flex-basis:35px}}
-</style>
-
-<style id="zanta-v11-layout">
-/* V11: phone-sized full-screen pages + animated RGB borders */
-:root{--z11-max:430px;--z11-cyan:#00e5ff;--z11-purple:#8b5cf6;--z11-pink:#ff2bd6;--z11-yellow:#ffe600}
-html,body{width:100%;min-height:100%;overflow-x:hidden;background:#020409!important}
-body{display:flex;justify-content:center}
-.shell{width:100%;max-width:var(--z11-max)!important;min-height:100dvh;margin:0 auto!important;padding:12px 12px calc(24px + env(safe-area-inset-bottom))!important}
-.zanta-topbar{position:sticky;top:0;z-index:1000;background:rgba(2,7,13,.92);backdrop-filter:blur(18px);padding:10px 2px 14px!important}
-.top-main-links{display:flex!important;align-items:center;gap:6px}
-.top-main-links button{color:#dcecff;background:transparent;padding:8px 7px;font-size:11px;font-weight:900;letter-spacing:.5px}
-.top-main-links button:active{color:#00e5ff}
-.top-actions{position:relative;display:flex;align-items:center;gap:6px}
-.top-icon-btn,.bell-btn{width:38px;height:38px;border-radius:13px!important;display:grid;place-items:center;background:#0b1528!important;color:#fff!important;border:1px solid #28405f!important}
-.top-icon-btn{font-size:18px}.bell-btn{position:relative}.bell-btn svg{width:18px;height:18px;fill:none;stroke:#fff;stroke-width:1.8}.bell-btn i{position:absolute;right:7px;top:6px;width:6px;height:6px;border-radius:50%;background:#ff2b68;box-shadow:0 0 9px #ff2b68}
-.top-menu{position:absolute;right:0;top:46px;z-index:1200;width:150px;padding:7px;border-radius:15px;background:#091323f5;border:1px solid transparent;background-clip:padding-box;box-shadow:0 18px 50px #000d}
-.top-menu:before{content:"";position:absolute;inset:0;border-radius:15px;padding:1px;background:linear-gradient(120deg,#00e5ff,#8b5cf6,#ff2bd6,#00e5ff);background-size:250% 250%;animation:z11border 4s linear infinite;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
-.top-menu button{display:flex;width:100%;gap:8px;padding:11px;border:0;border-radius:10px;background:#0d1930;color:#fff;text-align:left}
-/* No legacy bottom navigation on any page */
-#nav{display:none!important}
-.foot{display:none!important}
-#app{width:100%;max-width:100%;margin:0!important;position:relative}
-#app>.user-strip{width:100%;margin-top:4px!important}
-#app>.page{width:100%;min-height:calc(100dvh - 88px);padding-bottom:28px;animation:z11page .22s ease}
-#home{display:block!important;min-height:calc(100dvh - 88px)}
-#home>.hero,#home>[data-box="clock"]{display:none!important}
-#home>[data-box="balance"]{width:100%;margin:0 0 14px!important}
-#home>[data-box="tiles"]{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0 0 18px!important}
-#home>[data-box="tiles"] .tile{min-height:112px!important}
-#home>[data-box="whatsapp-react"],#home>[data-box="rewards"]{display:block!important}
-#home>[data-box="whatsapp-react"]{margin-top:14px}
-#home>[data-box="rewards"]{margin-top:14px}
-/* Show 3 sponsored units at the bottom of Home */
-#home>.zanta-monetization{display:flex!important;margin:18px 0 8px!important;max-width:none!important;width:100%!important;gap:10px!important}
-#home>.zanta-monetization .zanta-ad-card{width:100%!important;min-height:76px!important;padding:9px!important}
-#home>.zanta-monetization .zanta-ad-card:nth-child(n+4){display:none!important}
-#home>.zanta-monetization .zanta-ad-card:nth-child(2) .zanta-banner-slot,
-#home>.zanta-monetization .zanta-ad-card:nth-child(3) .zanta-banner-slot{display:flex!important}
-#home>.zanta-monetization .zanta-wide-banner{display:flex!important}
-#home>.zanta-monetization .zanta-skyscrapers{display:none!important}
-/* Force the mobile 320x50 unit to be visible in the third slot */
-#home>.zanta-monetization .zanta-banner-320x50{display:flex!important}
-#home>.zanta-monetization .zanta-banner-300x250{display:flex!important;min-height:250px}
-#home>.zanta-monetization .zanta-banner-468x60,#home>.zanta-monetization .zanta-banner-728x90{display:none!important}
-/* Full-screen inner pages */
-#pair,#settings,#profile,#about,#apps,#users,#feed,#chat,#social,#notifications{min-height:calc(100dvh - 88px)!important;padding-bottom:28px!important}
-#feed .feed-shell,#chat .chat-layout,#social .group-chat-screen,#users,#settings,#profile,#about,#apps,#notifications,#pair{width:100%;max-width:none!important}
-#chat .chat-layout.fullscreen{height:calc(100dvh - 130px)!important;min-height:0!important}
-/* Animated RGB border around Home boxes */
-#home .user-strip,#home>[data-box="balance"],#home>[data-box="tiles"] .tile,#home>[data-box="whatsapp-react"],#home>[data-box="rewards"],#home .zanta-ad-card{border:1px solid transparent!important;background-clip:padding-box!important;isolation:isolate}
-#home .user-strip:before,#home>[data-box="balance"]:before,#home>[data-box="tiles"] .tile:before,#home>[data-box="whatsapp-react"]:before,#home>[data-box="rewards"]:before,#home .zanta-ad-card:before{content:"";position:absolute;inset:-1px;border-radius:inherit;padding:1.5px;background:conic-gradient(from 0deg,#00e5ff,#8b5cf6,#ff2bd6,#ffe600,#00e5ff);background-size:200% 200%;animation:z11border 4.5s linear infinite;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;z-index:-1;pointer-events:none}
-#home>[data-box="tiles"] .tile{position:relative}
-#home .user-strip,#home>[data-box="balance"],#home>[data-box="whatsapp-react"],#home>[data-box="rewards"],#home .zanta-ad-card{position:relative}
-@keyframes z11border{0%{background-position:0% 50%;transform:rotate(0deg)}50%{background-position:100% 50%}100%{background-position:0% 50%;transform:rotate(360deg)}}
-@keyframes z11page{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-@media(max-width:360px){.shell{padding-left:9px!important;padding-right:9px!important}.top-main-links button{padding:8px 5px;font-size:10px}.top-icon-btn,.bell-btn{width:35px;height:35px}}
-</style>
-
-<style id="zanta-ad-fallback-v11">
-.zanta-ad-card{position:relative;min-height:76px}.zanta-ad-card .zanta-ad-fallback{display:none;text-align:center;color:#71839e;font-size:10px;letter-spacing:.7px;padding:10px}
-.zanta-ad-card:has(iframe) .zanta-ad-fallback{display:none}
-</style>
-</head><body><div id="startupLoader" style="position:fixed;inset:0;z-index:99999;background:#050914"><iframe id="startupLoaderFrame" title="Loading" style="width:100%;height:100%;border:0;display:block"></iframe></div><script>document.getElementById('startupLoaderFrame').src=location.pathname==='/zanta-owner-console-7f3a'?'/adminloding.html':'/userloding.html';</script><div class="shell"><header class="top zanta-topbar"><div class="brand"><div class="logo">Z</div><div>ZANTA-XMD OFC<div class="tag">OFFICIAL MINI BOT PORTAL</div></div></div><div class="top-actions"><div class="top-main-links" aria-label="Main navigation"><button type="button" onclick="go('home')">HOME</button><button type="button" onclick="go('pair')">BOTS</button><button type="button" onclick="go('apps')">SHOP</button></div><button class="top-icon-btn" id="settingsTopBtn" type="button" onclick="toggleTopMenu(event)" aria-label="Settings menu">⚙</button><button class="bell-btn" id="bellBtn" onclick="go('notifications')" aria-label="Notifications"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg><i id="bellDot"></i></button><div id="topMenu" class="top-menu hidden" role="menu"><button type="button" onclick="goFromTopMenu('settings')">⚙ <span>Settings</span></button><button type="button" onclick="goFromTopMenu('profile')">◉ <span>Profile</span></button></div></div></header><div id="pageBackBar" class="page-backbar hidden"><button type="button" onclick="goBackPage()" aria-label="Go back">‹</button><div><b id="pageBackTitle">Page</b><small>ZANTA-XMD OFC</small></div></div>
+<link rel="stylesheet" href="/zanta-rgb-theme.css"></head><body><div id="startupLoader" style="position:fixed;inset:0;z-index:99999;background:#050914"><iframe id="startupLoaderFrame" title="Loading" style="width:100%;height:100%;border:0;display:block"></iframe></div><script>document.getElementById('startupLoaderFrame').src=location.pathname==='/zanta-owner-console-7f3a'?'/adminloding.html':'/userloding.html';</script><div class="shell"><header class="top"><div class="brand"><div class="logo">Z</div><div>ZANTA-XMD OFC<div class="tag">OFFICIAL MINI BOT PORTAL</div></div></div><button class="bell-btn" id="bellBtn" onclick="go('notifications')" aria-label="Notifications"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg><i id="bellDot"></i></button></header><div style="padding:10px 16px;text-align:right"><a href="/react" style="display:inline-block;padding:9px 14px;border-radius:10px;background:#16a34a;color:white;text-decoration:none;font-weight:700">❤️ WhatsApp React</a></div>
 <main id="auth" class="page authgrid"><section class="hero"><div class="tag">WELCOME TO THE NEXT LEVEL</div><h1>Connect. Create.<br><span class="grad">Control your bot.</span></h1><p class="muted">Your ZANTA space — AI tools, WhatsApp pairing, apps and rewards in one secure dashboard.</p><p class="muted">DEVELOPER · SURANGA CHAMITH</p></section><section class="card"><div id="registerBox">
 <div id="emailOtpRegistration" style="display:block!important;visibility:visible!important"><div class="title">Create account</div><p class="muted">Verify your Gmail with a 6-digit OTP.</p><div class="field"><label>Gmail address</label><input id="otpEmail" type="email" autocomplete="email" placeholder="you@gmail.com"></div><button class="btn alt wide" type="button" onclick="sendEmailOtp()">SEND OTP TO GMAIL</button><div class="field" style="margin-top:12px"><label>6-digit OTP</label><input id="otpCode" inputmode="numeric" maxlength="6" placeholder="000000"></div><button class="btn alt wide" type="button" onclick="verifyEmailOtp()">VERIFY OTP</button><div class="field"><label>Username (must start with @)</label><input id="username" placeholder="@yourname" maxlength="21"></div><div class="field"><label>Password (9–19 characters)</label><input id="registerPass" type="password" autocomplete="new-password" placeholder="Create a strong password"></div><button class="btn wide" type="button" onclick="registerWithOtp()">CREATE ACCOUNT</button><button class="switch wide" onclick="showLogin()">Already registered? Log in</button></div>
 </div><div id="loginBox" class="hidden"><div class="title">Welcome back</div><p class="muted">Log in to your ZANTA account.</p><div class="field"><label>Email or @username</label><input id="identity" autocomplete="username"></div><div class="field"><label>Password</label><input id="loginPass" type="password" autocomplete="current-password"></div><button class="btn wide" onclick="login()">LOG IN ↗</button><button class="switch wide" onclick="showRegister()">Create account</button></div><div id="authMsg"></div></section></main>
-<main id="app" class="hidden page"><div class="user-strip" onclick="go('profile')"><img id="topDP" alt="DP"><div><strong id="topName">@user</strong><small>MY PROFILE　✎</small></div></div><section id="home" class="page"><div class="home-clock" data-box="clock"><div><small class="muted" id="homeClockCountry">Sri Lanka</small><div><b id="homeLiveClock">--:--:--</b></div></div><span class="pill">LOCAL LIVE TIME</span></div><div class="hero" data-box="hero"><div class="tag hero-kicker">YOUR PERSONAL CONTROL CENTER</div><h1>Hey, <span class="grad" id="welcome">@user</span></h1><p class="muted hero-subtitle">Everything you need, one tap away.</p></div><div class="card stats" data-box="balance"><div><div class="muted">YOUR BALANCE</div><div class="coin">◈ <span id="coins">0</span> <small style="font-size:12px">COINS</small></div></div><button id="dailyBtn" class="btn" onclick="daily()">CLAIM DAILY +</button></div><button class="home-game-card" type="button" onclick="openGamePage()" aria-label="Open Games"><span class="home-game-icon">🎮</span><span class="home-game-copy"><b>GAMES</b><small>Play & win +20 free coins</small></span><span class="home-game-arrow">›</span></button><div class="tiles" data-box="tiles"><button class="tile" onclick="go('pair')"><span>⌁</span><b>BOT PAIR</b><small class="muted">Connect WhatsApp</small></button><button class="tile" onclick="go('settings')"><span>⚙</span><b>SETTINGS</b><small class="muted">Account settings</small></button><button class="tile" onclick="go('about')"><span>ⓘ</span><b>ABOUT</b><small class="muted">Developer & links</small></button><button class="tile" onclick="go('apps')"><span>▦</span><b>SHOP</b><small class="muted">Unlock with coins</small></button><button class="tile" onclick="go('notifications')"><span>♧</span><b>NOTIFICATIONS</b><small class="muted">Updates & messages</small></button><button class="tile home-social-tile" onclick="go('social')"><span>✦</span><b>GROUPS</b><small class="muted">Create and open group chats</small></button><button class="tile home-social-tile" onclick="go('chat')"><span>✉</span><b>CHATS</b><small class="muted">Open your private messages</small></button><button class="tile home-social-tile" onclick="go('users')"><span>◎</span><b>USERS</b><small class="muted">Find people and invite friends</small></button></div>
+<main id="app" class="hidden page"><div class="user-strip" onclick="go('profile')"><img id="topDP" alt="DP"><div><strong id="topName">@user</strong><small>MY PROFILE　✎</small></div></div><section id="home" class="page"><div class="home-clock" data-box="clock"><div><small class="muted" id="homeClockCountry">Sri Lanka</small><div><b id="homeLiveClock">--:--:--</b></div></div><span class="pill">LOCAL LIVE TIME</span></div><div class="hero" data-box="hero"><div class="tag hero-kicker">YOUR PERSONAL CONTROL CENTER</div><h1>Hey, <span class="grad" id="welcome">@user</span></h1><p class="muted hero-subtitle">Everything you need, one tap away.</p></div><div class="card stats" data-box="balance"><div><div class="muted">YOUR BALANCE</div><div class="coin">◈ <span id="coins">0</span> <small style="font-size:12px">COINS</small></div></div><button id="dailyBtn" class="btn" onclick="daily()">CLAIM DAILY +</button></div><div class="tiles" data-box="tiles"><button class="tile" onclick="go('pair')"><span>⌁</span><b>BOT PAIR</b><small class="muted">Connect WhatsApp</small></button><button class="tile" onclick="go('settings')"><span>⚙</span><b>SETTINGS</b><small class="muted">Account settings</small></button><button class="tile" onclick="go('about')"><span>ⓘ</span><b>ABOUT</b><small class="muted">Developer & links</small></button><button class="tile" onclick="go('apps')"><span>▦</span><b>SHOP</b><small class="muted">Unlock with coins</small></button><button class="tile" onclick="go('notifications')"><span>♧</span><b>NOTIFICATIONS</b><small class="muted">Updates & messages</small></button><button class="tile home-social-tile" onclick="go('social')"><span>✦</span><b>GROUPS</b><small class="muted">Create and open group chats</small></button><button class="tile home-social-tile" onclick="go('chat')"><span>✉</span><b>CHATS</b><small class="muted">Open your private messages</small></button><button class="tile home-social-tile" onclick="go('users')"><span>◎</span><b>USERS</b><small class="muted">Find people and invite friends</small></button></div>
 <section class="section" data-box="whatsapp-react" aria-label="WhatsApp Channel Reactions">
   <a href="/react" class="wa-react-feature" style="display:flex;position:relative;overflow:hidden;align-items:center;justify-content:space-between;gap:16px;padding:20px 19px;margin-top:18px;border-radius:22px;text-decoration:none;color:#fff;background:radial-gradient(circle at 90% 10%,#25d36655,transparent 38%),linear-gradient(120deg,#092d2a,#101b36 58%,#25134a);border:1px solid #25d36688;box-shadow:0 12px 32px #0005,0 0 24px #25d36620;">
     <span style="position:absolute;right:-20px;bottom:-48px;font-size:130px;opacity:.07;pointer-events:none">💚</span>
@@ -284,14 +199,7 @@ async function registerWithOtp(){try{if(!emailOtpVerified)throw Error('Verify yo
 async function login(){try{const d=await api('/api/auth/login',{identity:$('identity').value,password:$('loginPass').value});me=d.user;await enter()}catch(e){say('authMsg',e.message,true)}}
 async function enter(){fetch('/api/presence/heartbeat',{method:'POST',credentials:'same-origin'}).catch(()=>{});initSettings();$('auth').classList.add('hidden');$('app').classList.remove('hidden');$('nav').classList.remove('hidden');$('welcome').textContent=me.username;$('topName').textContent=me.username;$('profileEmail').textContent='Email: '+me.email;$('profileName').textContent='Username: '+me.username;syncProfileImages();go('home',false);await refresh()}
 const appPages=['home','pair','apps','users','feed','chat','settings','profile','about','notifications','social'];let pageStack=['home'];
-
-function toggleTopMenu(e){if(e)e.stopPropagation();const m=$('topMenu');if(!m)return;m.classList.toggle('hidden')}
-function goFromTopMenu(page){$('topMenu')?.classList.add('hidden');go(page)}
-document.addEventListener('click',function(e){const m=$('topMenu'),b=$('settingsTopBtn');if(m&&!m.classList.contains('hidden')&&!m.contains(e.target)&&e.target!==b)m.classList.add('hidden')});
-const pageTitles={home:'Home',pair:'Bots',apps:'Shop',users:'Users',feed:'Feed',chat:'Inbox / Chat',social:'Groups',settings:'Settings',profile:'Profile',about:'About',notifications:'Notifications'};
-function goBackPage(){if(pageStack.length>1){history.back()}else{go('home',false)}}
-function openGamePage(){window.location.href='/games/game.html'}
-function go(page,push=true){if(!appPages.includes(page))return;$('topMenu')?.classList.add('hidden');appPages.forEach(x=>$(x).classList.toggle('hidden',x!==page));const shell=document.querySelector('.shell'),bar=$('pageBackBar'),title=$('pageBackTitle');const inner=page!=='home';shell?.classList.toggle('page-mode',inner);bar?.classList.toggle('hidden',!inner);if(title)title.textContent=pageTitles[page]||page.toUpperCase();window.scrollTo({top:0,left:0,behavior:'instant'});document.documentElement.scrollTop=0;document.body.scrollTop=0;if(push&&pageStack[pageStack.length-1]!==page){pageStack.push(page);history.pushState({zantaPage:page},'', '#'+page)}document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.getAttribute('onclick')?.includes("'"+page+"'")));if(page==='profile')syncProfileImages();if(page==='users')loadDirectory();if(page==='chat'){closeChatFullscreen();loadFriends()}if(page==='social')loadSocial();if(page==='feed')loadFeed();window.currentZantaPage=page}
+function go(page,push=true){if(!appPages.includes(page))return;appPages.forEach(x=>$(x).classList.toggle('hidden',x!==page));if(push&&pageStack[pageStack.length-1]!==page){pageStack.push(page);history.pushState({zantaPage:page},'', '#'+page)}document.querySelectorAll('.nav button').forEach(b=>b.classList.toggle('active',b.getAttribute('onclick')?.includes("'"+page+"'")));if(page==='profile')syncProfileImages();if(page==='users')loadDirectory();if(page==='chat'){closeChatFullscreen();loadFriends()}if(page==='social')loadSocial();if(page==='feed')loadFeed();window.currentZantaPage=page}
 window.addEventListener('popstate',()=>{if(pageStack.length>1)pageStack.pop();const prev=pageStack[pageStack.length-1]||'home';go(prev,false)});
 
 function feedTime(v){const d=new Date(v);return d.toLocaleString(undefined,{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}
@@ -421,111 +329,4 @@ document.addEventListener('DOMContentLoaded',()=>{const box=document.getElementB
 <script data-cfasync="false" src="https://abscloud.org/1/a40d2f9eadded153b407acc4074354c9"></script>
 <!-- Adsterra Social Bar -->
 <script data-cfasync="false" src="https://bauval.org/14/2335d88141ba14d4a4e4d25215d4dcfd"></script>
-
-<style id="zanta-main-v7">
-/* V7 MAIN DISPLAY — clean mobile dashboard */
-body{background:#020604!important}
-.shell{max-width:760px!important;padding:14px 14px 105px!important}
-.top{padding:10px 4px 16px!important}
-.top .brand{gap:10px}.top .logo{width:42px;height:42px;border-radius:14px}
-/* Main home: keep profile + coins, remove old dashboard cards */
-#home{display:block!important;max-width:720px;margin:0 auto}
-#home>.hero,#home>[data-box="clock"]{display:none!important}
-.user-strip{display:flex!important;align-items:center!important;gap:12px!important;margin:5px 0 14px!important;padding:12px 14px!important;border-radius:20px!important;background:linear-gradient(135deg,#0c1427,#0a0e19)!important;border:1px solid transparent!important;background-clip:padding-box!important;box-shadow:0 10px 35px #0008!important;position:relative;overflow:hidden}
-.user-strip:after{content:"";position:absolute;inset:0;border-radius:20px;padding:1px;background:linear-gradient(110deg,#00e5ff,#7c3aed,#ff2bd6,#00e5ff);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
-.user-strip img{width:48px!important;height:48px!important;border-radius:15px!important;border:1px solid #00d9ff!important;object-fit:cover;background:#0c1730}
-.user-strip strong{font-size:16px}.user-strip small{display:block;color:#71839e;margin-top:4px;font-size:9px;letter-spacing:1px}
-#home>[data-box="balance"]{display:block!important;min-height:215px!important;margin:0!important;padding:25px 22px!important;border-radius:25px!important;background:radial-gradient(circle at 85% 10%,#123e4f66,transparent 34%),radial-gradient(circle at 10% 95%,#40143e66,transparent 38%),linear-gradient(145deg,#0b1327,#070a13)!important;border:1px solid transparent!important;background-clip:padding-box!important;box-shadow:0 20px 70px #000b,0 0 30px #00d9ff14!important;position:relative;overflow:hidden}
-#home>[data-box="balance"]:before{content:"✦ ZANTA CONTROL CENTER ✦";display:block;color:#66eaff;font-size:9px;font-weight:900;letter-spacing:2px;margin-bottom:35px;opacity:.75}
-#home>[data-box="balance"]:after{content:"";position:absolute;inset:0;border-radius:25px;padding:1px;background:linear-gradient(120deg,#00e5ff,#7c3aed,#ff2bd6,#00e5ff);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
-#home>[data-box="balance"] .muted{font-size:10px;letter-spacing:2px;color:#8090aa!important;font-weight:900}
-#home>[data-box="balance"] .coin{font-size:46px!important;line-height:1.05;margin-top:8px!important;font-weight:1000!important;color:#25a9ff!important;text-shadow:0 0 22px #168bff55}
-#home>[data-box="balance"] .coin small{font-size:10px!important;letter-spacing:2px;color:#45bfff}
-#home>[data-box="balance"] #dailyBtn{width:100%!important;margin-top:24px!important;height:48px;border-radius:15px!important;background:linear-gradient(100deg,#071226,#0759a2)!important;border:1px solid #168bff66!important;color:#ccecff!important;position:relative;z-index:2}
-/* Hide the old top React link on main dashboard */
-.top + div:has(a[href="/react"]){display:none!important}
-/* New floating WhatsApp-style community button */
-.zanta-community-fab{position:fixed;right:18px;bottom:22px;width:62px;height:62px;border-radius:20px;border:1px solid #25d366aa;background:linear-gradient(145deg,#25d366,#0b9f59);box-shadow:0 12px 35px #000b,0 0 24px #25d36666;display:grid;place-items:center;color:white;z-index:9000;cursor:pointer;font-size:31px;transition:.2s transform}
-.zanta-community-fab:active{transform:scale(.92)}.zanta-community-fab span{font-size:11px;font-weight:900;position:absolute;bottom:3px;letter-spacing:.4px}
-.zanta-community-panel{position:fixed;right:18px;bottom:94px;width:min(330px,calc(100vw - 36px));padding:14px;border-radius:22px;background:linear-gradient(145deg,#0b1325f7,#070b15f7);border:1px solid transparent;background-clip:padding-box;box-shadow:0 20px 80px #000d,0 0 35px #00d9ff20;z-index:8999;display:none}
-.zanta-community-panel.show{display:block;animation:zcpIn .18s ease}@keyframes zcpIn{from{opacity:0;transform:translateY(10px) scale(.97)}to{opacity:1;transform:none}}
-.zcp-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}.zcp-head b{font-size:15px}.zcp-head small{color:#6f839f;font-size:9px;letter-spacing:1px}.zcp-close{width:32px;height:32px;border-radius:10px;background:#15233a;color:#fff;border:1px solid #2c4260}
-.zcp-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px}.zcp-item{min-height:82px;border:1px solid transparent;border-radius:17px;background:linear-gradient(#0d1729,#0d1729) padding-box,linear-gradient(130deg,#00e5ff,#7c3aed,#ff2bd6) border-box;color:#fff;text-align:left;padding:13px;cursor:pointer}.zcp-item:active{transform:scale(.98)}.zcp-icon{font-size:22px;display:block;margin-bottom:7px}.zcp-item b{font-size:12px}.zcp-item small{display:block;color:#788ba5;margin-top:3px;font-size:9px}
-/* Inner pages keep a compact navigation bar; home stays clean */
-#nav{transition:.2s}#nav.home-clean{display:none!important}
-@media(max-width:600px){.shell{padding-left:12px!important;padding-right:12px!important}.zanta-community-fab{right:16px;bottom:18px;width:58px;height:58px;border-radius:18px}.zanta-community-panel{right:14px;bottom:86px;width:calc(100vw - 28px)}}
-</style>
-
-
-<!-- V7 floating community launcher -->
-<button class="zanta-community-fab" id="zantaCommunityFab" type="button" aria-label="Open community" onclick="toggleZantaCommunity(true)"><span class="zcf-icon">☏</span><span class="zcf-label">COMMUNITY</span><span class="zcf-dot"></span></button>
-<div class="zanta-community-panel" id="zantaCommunityPanel" aria-label="ZANTA community">
-  <div class="zcp-head"><div><b>ZANTA COMMUNITY</b><small> USERS · INBOX · GROUP · FEED</small></div><button class="zcp-close" type="button" onclick="toggleZantaCommunity(false)">×</button></div>
-  <div class="zcp-grid">
-    <button class="zcp-item" onclick="openZantaCommunityPage('users')"><span class="zcp-icon">👥</span><b>USERS</b><small>Find people</small></button>
-    <button class="zcp-item" onclick="openZantaCommunityPage('chat')"><span class="zcp-icon">✉️</span><b>INBOX</b><small>Private messages</small></button>
-    <button class="zcp-item" onclick="openZantaCommunityPage('social')"><span class="zcp-icon">👥</span><b>GROUP</b><small>Group chats</small></button>
-    <button class="zcp-item" onclick="openZantaCommunityPage('feed')"><span class="zcp-icon">✦</span><b>FEEDS</b><small>Posts & videos</small></button>
-  </div>
-</div>
-<script id="zanta-main-v7-js">
-function toggleZantaCommunity(force){const p=document.getElementById('zantaCommunityPanel');if(!p)return;p.classList.toggle('show',force===undefined?!p.classList.contains('show'):!!force)}
-function openZantaCommunityPage(page){toggleZantaCommunity(false);if(typeof go==='function')go(page)}
-(function(){
- const oldGo=window.go;
- if(typeof oldGo==='function'){
-   window.go=function(page,push=true){oldGo(page,push);const nav=document.getElementById('nav');if(nav)nav.classList.toggle('home-clean',page==='home');const fab=document.getElementById('zantaCommunityFab');if(fab)fab.style.display=document.getElementById('app')?.classList.contains('hidden')?'none':'grid';};
- }
- document.addEventListener('click',e=>{const p=document.getElementById('zantaCommunityPanel'),f=document.getElementById('zantaCommunityFab');if(p?.classList.contains('show')&&!p.contains(e.target)&&e.target!==f&&!f?.contains(e.target))p.classList.remove('show')});
-})();
-</script>
-
-
-<style id="zanta-main-v8-fix">
-/* V8 — guaranteed visible community launcher */
-.zanta-community-fab{
- position:fixed!important;right:18px!important;bottom:calc(18px + env(safe-area-inset-bottom))!important;
- width:72px!important;height:72px!important;border-radius:22px!important;
- display:grid!important;place-items:center!important;
- background:linear-gradient(145deg,#25d366 0%,#0aa85b 55%,#078f4c 100%)!important;
- border:2px solid rgba(255,255,255,.28)!important;color:#fff!important;
- z-index:2147483000!important;visibility:visible!important;opacity:1!important;
- box-shadow:0 12px 34px rgba(0,0,0,.75),0 0 0 5px rgba(37,211,102,.10),0 0 32px rgba(37,211,102,.58)!important;
- transform:none!important;
-}
-.zanta-community-fab:active{transform:scale(.94)!important}
-.zanta-community-fab .zcf-icon{display:grid!important;place-items:center!important;width:38px!important;height:38px!important;border:2px solid #fff!important;border-radius:12px!important;font-size:25px!important;font-weight:900!important;line-height:1!important}
-.zanta-community-fab .zcf-label{position:absolute!important;bottom:4px!important;font-size:7px!important;font-weight:1000!important;letter-spacing:.8px!important;color:#fff!important}
-.zanta-community-fab .zcf-dot{position:absolute!important;right:4px!important;top:4px!important;width:10px!important;height:10px!important;border-radius:50%!important;background:#ff285f!important;border:2px solid #0b9f59!important;box-shadow:0 0 10px #ff285f!important}
-.zanta-community-panel{z-index:2147482999!important;bottom:104px!important}
-@media(max-width:600px){.zanta-community-fab{right:14px!important;bottom:calc(16px + env(safe-area-inset-bottom))!important;width:66px!important;height:66px!important;border-radius:20px!important}.zanta-community-panel{right:12px!important;bottom:92px!important;width:calc(100vw - 24px)!important}}
-/* Home must stay clean: no legacy navigation visible. */
-#nav.home-clean{display:none!important}
-</style>
-<script id="zanta-main-v8-js">
-(function(){
-  const show=()=>{const b=document.getElementById('zantaCommunityFab');if(b){b.style.setProperty('display','grid','important');b.style.setProperty('visibility','visible','important');b.style.setProperty('opacity','1','important')}};
-  show();
-  document.addEventListener('DOMContentLoaded',show);
-  window.addEventListener('load',show);
-  setTimeout(show,300);setTimeout(show,1200);
-})();
-</script>
-
-<style id="zanta-v12-mobile-pages">
-html,body{width:100%;max-width:100%;overflow-x:hidden;background:#020305!important}
-body{min-height:100dvh}
-.shell{width:100%!important;max-width:430px!important;margin:0 auto!important;padding-left:10px!important;padding-right:10px!important}
-.zanta-topbar{max-width:430px!important;margin-left:auto!important;margin-right:auto!important}
-.page-backbar{display:flex;align-items:center;gap:12px;height:58px;padding:7px 4px 9px;position:sticky;top:0;z-index:70;background:rgba(3,6,17,.97);backdrop-filter:blur(18px);border-bottom:1px solid rgba(72,190,255,.16)}
-.page-backbar.hidden{display:none!important}.page-backbar>button{width:42px;height:42px;border-radius:13px;background:linear-gradient(145deg,#101b31,#09101e);border:1px solid #2a5c86;color:#fff;font-size:30px;line-height:1}.page-backbar b{display:block;font-size:15px}.page-backbar small{display:block;margin-top:2px;color:#6f89a6;font-size:8px;letter-spacing:1.4px}
-.shell.page-mode .zanta-topbar,.shell.page-mode>.user-strip{display:none!important}.shell.page-mode{padding-top:0!important;padding-bottom:0!important}.shell.page-mode #app{min-height:100dvh!important}.shell.page-mode #app>.page{min-height:calc(100dvh - 58px)!important;margin:0!important;padding:14px 0 30px!important}.shell.page-mode #app>.page.hidden{display:none!important}.shell.page-mode #nav,.shell.page-mode .foot{display:none!important}
-@property --zangle{syntax:'<angle>';inherits:false;initial-value:0deg}
-#home .user-strip,#home>[data-box="balance"],#home>[data-box="tiles"] .tile,#home>[data-box="whatsapp-react"],#home>[data-box="rewards"],#home .zanta-ad-card,.home-game-card{position:relative!important;border:1px solid transparent!important;background-clip:padding-box!important;isolation:isolate}
-#home .user-strip:before,#home>[data-box="balance"]:before,#home>[data-box="tiles"] .tile:before,#home>[data-box="whatsapp-react"]:before,#home>[data-box="rewards"]:before,#home .zanta-ad-card:before,.home-game-card:before{content:"";position:absolute!important;inset:-1px!important;border-radius:inherit!important;padding:2px!important;background:conic-gradient(from var(--zangle),transparent 0deg 285deg,#fff 300deg,#2d8cff 326deg,#fff 344deg,transparent 360deg)!important;-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0)!important;-webkit-mask-composite:xor!important;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0)!important;mask-composite:exclude!important;animation:zantaBlueBorder 3.8s linear infinite!important;z-index:5!important;pointer-events:none!important;transform:none!important}
-@keyframes zantaBlueBorder{to{--zangle:360deg}}
-#home>[data-box="balance"]:after,#home>[data-box="tiles"] .tile:after{display:none!important}
-.home-game-card{width:100%;display:flex;align-items:center;gap:12px;margin:14px 0 0;padding:14px 15px;border-radius:19px;background:linear-gradient(145deg,#0c1629,#07101d)!important;color:#fff;text-align:left;box-shadow:0 14px 34px #0008;cursor:pointer;overflow:hidden}.home-game-card:active{transform:scale(.985)}.home-game-icon{width:48px;height:48px;flex:0 0 48px;border-radius:15px;display:grid;place-items:center;font-size:25px;background:linear-gradient(135deg,#0b5fff,#257cff,#7b4dff);box-shadow:0 0 20px #1678ff55}.home-game-copy{flex:1;min-width:0}.home-game-copy b{display:block;font-size:14px;letter-spacing:1px}.home-game-copy small{display:block;margin-top:4px;color:#8297b1;font-size:10px}.home-game-arrow{font-size:28px;color:#66caff}
-</style>
-<script id="zanta-v12-fix">(function(){const f=()=>{const s=document.querySelector('.shell');if(s){s.style.maxWidth='430px';s.style.width='100%'}};document.addEventListener('DOMContentLoaded',f);window.addEventListener('resize',f);f()})();</script>
 </body></html>
