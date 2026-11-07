@@ -10,7 +10,7 @@ module.exports = function attachDashboard(app, options) {
     email:{type:String,required:true,unique:true,lowercase:true,trim:true},
     username:{type:String,required:true,unique:true,trim:true,lowercase:true},
     passwordHash:{type:String,default:''}, passwordSalt:{type:String,default:''}, googleSub:{type:String,default:'',index:true},
-    coins:{type:Number,default:0,min:0}, taskClaims:{type:[String],default:[]}, unlockedApps:{type:[String],default:[]}, lastDaily:{type:String,default:''},
+    coins:{type:Number,default:0,min:0}, gameRewardDay:{type:String,default:''}, taskClaims:{type:[String],default:[]}, unlockedApps:{type:[String],default:[]}, lastDaily:{type:String,default:''},
     createdAt:{type:Date,default:Date.now}, hidden:{type:Boolean,default:false}, lastSeen:{type:Date,default:null}, onlineUntil:{type:Date,default:null}
   },{collection:'zanta_web_users'}));
   const EmailOtp = mongoose.models.ZantaEmailOtp || mongoose.model('ZantaEmailOtp', new Schema({email:{type:String,required:true,index:true},codeHash:{type:String,required:true},expiresAt:{type:Date,required:true,index:{expires:0}},lastSentAt:{type:Date,default:Date.now},attempts:{type:Number,default:0}},{collection:'zanta_email_otps'}));
@@ -31,6 +31,8 @@ module.exports = function attachDashboard(app, options) {
   const FeedPost = mongoose.models.ZantaFeedPost || mongoose.model('ZantaFeedPost',new Schema({author:{type:Schema.Types.ObjectId,required:true,index:true},text:{type:String,default:'',maxlength:5000},mediaUrl:{type:String,default:'',maxlength:300000},mediaType:{type:String,enum:['image','video',''],default:''},likes:{type:[Schema.Types.ObjectId],default:[]},comments:{type:[{userId:Schema.Types.ObjectId,text:{type:String,maxlength:500},createdAt:{type:Date,default:Date.now}}],default:[]},createdAt:{type:Date,default:Date.now,index:true},updatedAt:{type:Date,default:Date.now}},{collection:'zanta_feed_posts'}));
   const COOKIE='zanta_session', hash=s=>crypto.createHash('sha256').update(s).digest('hex');
   const isOwnerIdentity=email=>String(email||'').trim().toLowerCase()===String(process.env.ADMIN_EMAIL||'').trim().toLowerCase();
+  const GAME_OWNER_EMAIL=String(process.env.OWNER_EMAIL||'zantaxmd2@gmail.com').trim().toLowerCase();
+  const isGameOwner=u=>String(u?.email||'').trim().toLowerCase()===GAME_OWNER_EMAIL;
   const cleanUser=u=>({id:String(u._id),email:u.email,username:u.username,coins:u.coins,taskClaims:u.taskClaims||[],createdAt:u.createdAt,verified:!!u.verified||isOwnerIdentity(u.email)});
   const cookie=(req,max)=>`${COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=${max}${process.env.NODE_ENV==='production'?'; Secure':''}`;
   function token(req){for(const p of (req.headers.cookie||'').split(';')){const i=p.indexOf('=');if(i>0&&p.slice(0,i).trim()===COOKIE)return decodeURIComponent(p.slice(i+1));}return '';}
@@ -51,6 +53,10 @@ module.exports = function attachDashboard(app, options) {
   app.get('/shop.html',(req,res)=>res.sendFile(require('path').join(__dirname,'public','shop.html')));
   app.get('/ai',(req,res)=>res.sendFile(require('path').join(__dirname,'public','ai.html')));
   app.get('/ai.html',(req,res)=>res.sendFile(require('path').join(__dirname,'public','ai.html')));
+  app.get('/game/game.html',(req,res)=>{res.set('Cache-Control','no-store');res.sendFile(require('path').join(__dirname,'public','game','game.html'));});
+  // Contact menu image assets
+  app.get('/contact-icons.png',(req,res)=>res.sendFile(require('path').join(__dirname,'public','contact-icons.png')));
+  app.get('/floating-contact.png',(req,res)=>res.sendFile(require('path').join(__dirname,'public','floating-contact.png')));
   // Serve the editable user dashboard from MongoDB when an admin has saved it.
   app.get('/user-dashboard.html', async (req, res) => {
     try {
@@ -187,8 +193,68 @@ module.exports = function attachDashboard(app, options) {
   app.delete('/api/groups/:id/members/:userId',auth,async(req,res)=>{const g=await ChatGroup.findOne({_id:req.params.id,members:req.user._id});if(!g||!(String(g.owner)===String(req.user._id)||(g.admins||[]).some(x=>String(x)===String(req.user._id))))return res.status(403).json({error:'Only group admins can remove members.'});const target=req.params.userId;if(String(g.owner)===target)return res.status(400).json({error:'The group owner cannot be removed.'});if(String(g.owner)!==String(req.user._id)&&(g.admins||[]).some(x=>String(x)===target))return res.status(403).json({error:'Admins cannot remove another admin.'});await ChatGroup.updateOne({_id:g._id},{$pull:{members:new mongoose.Types.ObjectId(target),admins:new mongoose.Types.ObjectId(target)}});res.json({success:true});});
   app.post('/api/groups/:id/messages/:messageId/react',auth,async(req,res)=>{const g=await ChatGroup.findOne({_id:req.params.id,members:req.user._id});if(!g)return res.status(403).json({error:'Not a group member.'});const emoji=String(req.body.emoji||'').slice(0,12);if(!['❤️','😂','😮','😢','🔥','👍','👏'].includes(emoji))return res.status(400).json({error:'Unsupported reaction.'});const m=await GroupMessage.findOne({_id:req.params.messageId,groupId:g._id});if(!m)return res.status(404).json({error:'Message not found.'});m.reactions=m.reactions.filter(r=>String(r.userId)!==String(req.user._id));m.reactions.push({userId:req.user._id,emoji});await m.save();res.json({success:true});});
   app.delete('/api/groups/:id/messages/:messageId',auth,async(req,res)=>{const g=await ChatGroup.findOne({_id:req.params.id,members:req.user._id});if(!g)return res.status(403).json({error:'Not a group member.'});const m=await GroupMessage.findOne({_id:req.params.messageId,groupId:g._id,from:req.user._id});if(!m)return res.status(404).json({error:'Only your own message can be deleted.'});m.text='This message was deleted';m.deleted=true;await m.save();res.json({success:true});});
+  app.post('/api/game/start',auth,async(req,res)=>{
+    try{
+      const game=String(req.body.game||'checkers');
+      if(game!=='checkers')return res.status(400).json({error:'Invalid game.'});
+      const now=new Date();
+      await GameSession.deleteMany({userId:req.user._id,expiresAt:{$lte:now}});
+      const token=crypto.randomBytes(32).toString('hex');
+      await GameSession.create({userId:req.user._id,tokenHash:hash(token),game,startedAt:now,expiresAt:new Date(now.getTime()+15*60*1000)});
+      res.json({token});
+    }catch(e){console.error('[Game start]',e);res.status(500).json({error:'Could not start the game.'});}
+  });
+  app.post('/api/game/claim',auth,async(req,res)=>{
+    try{
+      const token=String(req.body.token||'');
+      const game=String(req.body.game||'');
+      const result=String(req.body.result||'');
+      if(!token||game!=='checkers'||result!=='win')return res.status(400).json({error:'Invalid game result.'});
+      const session=await GameSession.findOne({userId:req.user._id,tokenHash:hash(token),game:'checkers',claimedAt:null,expiresAt:{$gt:new Date()}});
+      if(!session)return res.status(409).json({error:'Game session expired or reward already claimed.'});
+      if(Date.now()-session.startedAt.getTime()<5000)return res.status(400).json({error:'Finish the game before claiming the reward.'});
+      session.claimedAt=new Date();
+      await session.save();
+      const reward=50;
+      const day=new Date().toISOString().slice(0,10);
+      let u;
+      if(isGameOwner(req.user)){
+        u=await User.findByIdAndUpdate(req.user._id,{$inc:{coins:reward}},{new:true});
+      }else{
+        u=await User.findOneAndUpdate({_id:req.user._id,gameRewardDay:{$ne:day}},{$inc:{coins:reward},$set:{gameRewardDay:day}},{new:true});
+        if(!u)return res.status(409).json({error:'Today’s game reward has already been claimed. Come back tomorrow.'});
+      }
+      await Notice.create({userId:u._id,kind:'coin',message:`Checkers victory reward: +${reward} coins`,data:{reward,game:'checkers'}});
+      res.json({success:true,reward,user:cleanUser(u),owner:isGameOwner(u)});
+    }catch(e){console.error('[Game claim]',e);res.status(500).json({error:'Could not add game reward.'});}
+  });
   app.post('/api/admin/users/:id/hide',requireAdmin,async(req,res)=>{const hidden=!!req.body.hidden;const u=await User.findByIdAndUpdate(req.params.id,{$set:{hidden}},{new:true});if(!u)return res.status(404).json({error:'User not found.'});res.json({success:true,hidden});});
-  app.post('/api/pair',auth,async(req,res)=>{let n=String(req.body.number||'').replace(/\D/g,'');if(n.startsWith('0'))n='94'+n.slice(1);if(!/^94\d{9}$/.test(n))return res.status(400).json({error:'Enter a valid Sri Lankan number.'});try{const r=await requestPairCode(n);res.json({code:r.code});}catch(e){res.status(500).json({error:e.message||'Pairing failed'});}});
+  app.post('/api/pair',auth,async(req,res)=>{
+    let n=String(req.body.number||'').replace(/\D/g,'');
+    if(n.startsWith('0'))n='94'+n.slice(1);
+    if(!/^94\d{9}$/.test(n))return res.status(400).json({error:'Enter a valid Sri Lankan number.'});
+    try{
+      const now=new Date();
+      let a=await PairAttempt.findOne({userId:req.user._id});
+      if(a?.blockedUntil&&a.blockedUntil>now){
+        const hours=Math.max(1,Math.ceil((a.blockedUntil-now)/3600000));
+        return res.status(429).json({error:`You are blocked from getting pair codes for 24 hours. Try again in about ${hours} hour(s).`});
+      }
+      if(!a || (now-a.windowStartedAt)>=24*60*60*1000){
+        a=await PairAttempt.findOneAndUpdate({userId:req.user._id},{$set:{count:1,windowStartedAt:now,blockedUntil:null}},{new:true,upsert:true,setDefaultsOnInsert:true});
+      }else{
+        if(a.count>=5){
+          a.blockedUntil=new Date(now.getTime()+24*60*60*1000);
+          await a.save();
+          return res.status(429).json({error:'YOU ARE BLOCKED — pair code limit reached. Try again after 24 hours.'});
+        }
+        a.count+=1;
+        await a.save();
+      }
+      const r=await requestPairCode(n);
+      res.json({code:r.code,remaining:Math.max(0,5-a.count)});
+    }catch(e){res.status(500).json({error:e.message||'Pairing failed'});}
+  });
   app.post('/api/admin/login',async(req,res)=>{try{const identity=String(req.body.identity||req.body.email||req.body.username||'').trim().toLowerCase(),password=String(req.body.password||'');const expectedEmail=String(process.env.ADMIN_EMAIL||'').trim().toLowerCase(),expectedUsername=String(process.env.ADMIN_USERNAME||'').trim().toLowerCase(),expectedPass=String(process.env.ADMIN_PASSWORD||'');const identityOk=!!identity&&((expectedEmail&&identity===expectedEmail)||(expectedUsername&&identity===expectedUsername));if(!expectedEmail||!expectedUsername||!expectedPass||!identityOk||password!==expectedPass)return res.status(401).json({error:'Invalid admin username/email or password. Check ADMIN_EMAIL, ADMIN_USERNAME and ADMIN_PASSWORD in hosting environment variables.'});const t=crypto.randomBytes(32).toString('hex');await AdminSession.create({tokenHash:hash(t),expiresAt:new Date(Date.now()+8*3600000)});res.json({token:t});}catch(e){res.status(503).json({error:'Admin login unavailable. Check MongoDB connection.'});}});
   app.get('/api/admin/users',requireAdmin,async(req,res)=>{const users=await User.find({}).select('email username coins createdAt hidden').sort({createdAt:-1}).limit(500).lean();res.json({users});});
   app.post('/api/admin/coins',requireAdmin,async(req,res)=>{const target=String(req.body.target||'').trim().toLowerCase(),amount=Number(req.body.amount);if(!Number.isSafeInteger(amount)||amount<1||amount>1000000)return res.status(400).json({error:'Invalid coin amount.'});const u=await User.findOneAndUpdate({$or:[{email:target},{username:target}]},{$inc:{coins:amount}},{new:true});if(!u)return res.status(404).json({error:'User not found.'});await Notice.create({userId:u._id,kind:'coin',message:`Developer sent you ${amount} coins.`});res.json({user:cleanUser(u)});});
