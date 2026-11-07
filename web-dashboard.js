@@ -47,7 +47,8 @@ module.exports = function attachDashboard(app, options) {
   app.get('/adminloding.html',(req,res)=>res.sendFile(require('path').join(__dirname,'adminloding.html')));
   app.get('/admin',(req,res)=>res.sendFile(require('path').join(__dirname,'admin.html')));
   app.get('/admin.html',(req,res)=>res.sendFile(require('path').join(__dirname,'admin.html')));
-  app.get('/games/game.html',(req,res)=>res.sendFile(require('path').join(__dirname,'public','games','game.html')));
+  app.get('/shop',(req,res)=>res.sendFile(require('path').join(__dirname,'public','shop.html')));
+  app.get('/shop.html',(req,res)=>res.sendFile(require('path').join(__dirname,'public','shop.html')));
   // Serve the editable user dashboard from MongoDB when an admin has saved it.
   app.get('/user-dashboard.html', async (req, res) => {
     try {
