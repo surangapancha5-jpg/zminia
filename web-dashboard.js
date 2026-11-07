@@ -29,7 +29,6 @@ module.exports = function attachDashboard(app, options) {
   const GroupMessage = mongoose.models.ZantaGroupMessage || mongoose.model('ZantaGroupMessage',new Schema({groupId:{type:Schema.Types.ObjectId,index:true},from:{type:Schema.Types.ObjectId,index:true},text:{type:String,required:true,maxlength:2000},replyTo:{type:Schema.Types.Mixed,default:null},reactions:{type:[{userId:Schema.Types.ObjectId,emoji:String}],default:[]},deleted:{type:Boolean,default:false},createdAt:{type:Date,default:Date.now}},{collection:'zanta_group_messages'}));
   const SupportTicket = mongoose.models.ZantaSupportTicket || mongoose.model('ZantaSupportTicket',new Schema({userId:{type:Schema.Types.ObjectId,index:true},username:String,email:String,subject:{type:String,default:'Support request'},message:{type:String,required:true,maxlength:2000},createdAt:{type:Date,default:Date.now},status:{type:String,default:'open'}},{collection:'zanta_support_tickets'}));
   const FeedPost = mongoose.models.ZantaFeedPost || mongoose.model('ZantaFeedPost',new Schema({author:{type:Schema.Types.ObjectId,required:true,index:true},text:{type:String,default:'',maxlength:5000},mediaUrl:{type:String,default:'',maxlength:300000},mediaType:{type:String,enum:['image','video',''],default:''},likes:{type:[Schema.Types.ObjectId],default:[]},comments:{type:[{userId:Schema.Types.ObjectId,text:{type:String,maxlength:500},createdAt:{type:Date,default:Date.now}}],default:[]},createdAt:{type:Date,default:Date.now,index:true},updatedAt:{type:Date,default:Date.now}},{collection:'zanta_feed_posts'}));
-  const GameSession = mongoose.models.ZantaGameSession || mongoose.model('ZantaGameSession',new Schema({userId:{type:Schema.Types.ObjectId,required:true,index:true},tokenHash:{type:String,unique:true,required:true,index:true},game:{type:String,default:'tap-runner'},startedAt:{type:Date,default:Date.now},expiresAt:{type:Date,required:true,index:true},claimedAt:{type:Date,default:null}},{collection:'zanta_game_sessions'}));
   const COOKIE='zanta_session', hash=s=>crypto.createHash('sha256').update(s).digest('hex');
   const isOwnerIdentity=email=>String(email||'').trim().toLowerCase()===String(process.env.ADMIN_EMAIL||'').trim().toLowerCase();
   const cleanUser=u=>({id:String(u._id),email:u.email,username:u.username,coins:u.coins,taskClaims:u.taskClaims||[],createdAt:u.createdAt,verified:!!u.verified||isOwnerIdentity(u.email)});
@@ -46,11 +45,13 @@ module.exports = function attachDashboard(app, options) {
   app.get('/',(req,res)=>{res.set({'Cache-Control':'no-store, no-cache, must-revalidate, proxy-revalidate','Pragma':'no-cache','Expires':'0','Surrogate-Control':'no-store'});res.sendFile(require('path').join(__dirname,'public','index.html'));});
   app.get('/userloding.html',(req,res)=>res.sendFile(require('path').join(__dirname,'userloding.html')));
   app.get('/adminloding.html',(req,res)=>res.sendFile(require('path').join(__dirname,'adminloding.html')));
+  app.get('/admin',(req,res)=>res.sendFile(require('path').join(__dirname,'admin.html')));
+  app.get('/admin.html',(req,res)=>res.sendFile(require('path').join(__dirname,'admin.html')));
   // Serve the editable user dashboard from MongoDB when an admin has saved it.
   app.get('/user-dashboard.html', async (req, res) => {
     try {
       const saved = await Config.findOne({ key: 'userDashboardHtml' }).lean();
-      if (saved && typeof saved.value === 'string' && saved.value.trim() && /data-zanta-dashboard-version=\"6\"/i.test(saved.value)) {
+      if (saved && typeof saved.value === 'string' && saved.value.trim()) {
         res.set('Content-Type', 'text/html; charset=utf-8');
         res.set('Cache-Control', 'no-store');
         return res.status(200).send(saved.value);
@@ -60,7 +61,6 @@ module.exports = function attachDashboard(app, options) {
   });
   // Serve the same dashboard shell at the private owner-console URL.
   app.get('/zanta-owner-console-7f3a',(req,res)=>res.sendFile(require('path').join(__dirname,'public','index.html')));
-  app.get('/games/game.html',(req,res)=>{res.set('Cache-Control','no-store');res.sendFile(require('path').join(__dirname,'public','games','game.html'));});
   // OAuth Client ID is public by design; env var can override this default.
   const GOOGLE_CLIENT_ID = String(process.env.GOOGLE_CLIENT_ID || '1069665681737-151ruk70qcma4gcp8s7bn62jmg3oe80b.apps.googleusercontent.com');
   app.get('/api/auth/config',(req,res)=>res.json({googleClientId:GOOGLE_CLIENT_ID}));
@@ -181,30 +181,6 @@ module.exports = function attachDashboard(app, options) {
   app.post('/api/groups/:id/messages/:messageId/react',auth,async(req,res)=>{const g=await ChatGroup.findOne({_id:req.params.id,members:req.user._id});if(!g)return res.status(403).json({error:'Not a group member.'});const emoji=String(req.body.emoji||'').slice(0,12);if(!['❤️','😂','😮','😢','🔥','👍','👏'].includes(emoji))return res.status(400).json({error:'Unsupported reaction.'});const m=await GroupMessage.findOne({_id:req.params.messageId,groupId:g._id});if(!m)return res.status(404).json({error:'Message not found.'});m.reactions=m.reactions.filter(r=>String(r.userId)!==String(req.user._id));m.reactions.push({userId:req.user._id,emoji});await m.save();res.json({success:true});});
   app.delete('/api/groups/:id/messages/:messageId',auth,async(req,res)=>{const g=await ChatGroup.findOne({_id:req.params.id,members:req.user._id});if(!g)return res.status(403).json({error:'Not a group member.'});const m=await GroupMessage.findOne({_id:req.params.messageId,groupId:g._id,from:req.user._id});if(!m)return res.status(404).json({error:'Only your own message can be deleted.'});m.text='This message was deleted';m.deleted=true;await m.save();res.json({success:true});});
   app.post('/api/admin/users/:id/hide',requireAdmin,async(req,res)=>{const hidden=!!req.body.hidden;const u=await User.findByIdAndUpdate(req.params.id,{$set:{hidden}},{new:true});if(!u)return res.status(404).json({error:'User not found.'});res.json({success:true,hidden});});
-  app.post('/api/games/start',auth,async(req,res)=>{
-    try{
-      const token=crypto.randomBytes(32).toString('hex');
-      const now=new Date();
-      await GameSession.deleteMany({userId:req.user._id,$or:[{expiresAt:{$lte:now}},{claimedAt:{$ne:null}}]});
-      await GameSession.create({userId:req.user._id,tokenHash:hash(token),game:'checkers',startedAt:now,expiresAt:new Date(now.getTime()+10*60*1000)});
-      res.json({success:true,token});
-    }catch(e){res.status(500).json({error:'Could not start the game.'});}
-  });
-  app.post('/api/games/claim',auth,async(req,res)=>{
-    try{
-      const token=String(req.body.token||'');
-      if(!token)return res.status(400).json({error:'Game session is missing.'});
-      const session=await GameSession.findOne({userId:req.user._id,tokenHash:hash(token),game:'checkers',claimedAt:null,expiresAt:{$gt:new Date()}});
-      if(!session)return res.status(400).json({error:'Game session expired or already claimed.'});
-      const elapsed=Date.now()-new Date(session.startedAt).getTime();
-      if(elapsed<5000)return res.status(400).json({error:'Finish the game before claiming the reward.'});
-      session.claimedAt=new Date();
-      await session.save();
-      const user=await User.findOneAndUpdate({_id:req.user._id},{$inc:{coins:20}},{new:true});
-      await Notice.create({userId:req.user._id,kind:'coin',message:'You won a game and received 20 free coins.',data:{reward:20,game:'checkers'}});
-      res.json({success:true,reward:20,user:cleanUser(user)});
-    }catch(e){console.error('[Game claim]',e);res.status(500).json({error:'Could not add game reward.'});}
-  });
   app.post('/api/pair',auth,async(req,res)=>{let n=String(req.body.number||'').replace(/\D/g,'');if(n.startsWith('0'))n='94'+n.slice(1);if(!/^94\d{9}$/.test(n))return res.status(400).json({error:'Enter a valid Sri Lankan number.'});try{const r=await requestPairCode(n);res.json({code:r.code});}catch(e){res.status(500).json({error:e.message||'Pairing failed'});}});
   app.post('/api/admin/login',async(req,res)=>{try{const identity=String(req.body.identity||req.body.email||req.body.username||'').trim().toLowerCase(),password=String(req.body.password||'');const expectedEmail=String(process.env.ADMIN_EMAIL||'').trim().toLowerCase(),expectedUsername=String(process.env.ADMIN_USERNAME||'').trim().toLowerCase(),expectedPass=String(process.env.ADMIN_PASSWORD||'');const identityOk=!!identity&&((expectedEmail&&identity===expectedEmail)||(expectedUsername&&identity===expectedUsername));if(!expectedEmail||!expectedUsername||!expectedPass||!identityOk||password!==expectedPass)return res.status(401).json({error:'Invalid admin username/email or password. Check ADMIN_EMAIL, ADMIN_USERNAME and ADMIN_PASSWORD in hosting environment variables.'});const t=crypto.randomBytes(32).toString('hex');await AdminSession.create({tokenHash:hash(t),expiresAt:new Date(Date.now()+8*3600000)});res.json({token:t});}catch(e){res.status(503).json({error:'Admin login unavailable. Check MongoDB connection.'});}});
   app.get('/api/admin/users',requireAdmin,async(req,res)=>{const users=await User.find({}).select('email username coins createdAt hidden').sort({createdAt:-1}).limit(500).lean();res.json({users});});
