@@ -1,122 +1,72 @@
 <!DOCTYPE html>
 <html lang="si">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Zanta Official Dashboard</title>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@800&display=swap" rel="stylesheet">
-    <style>
-        *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-        html,body{min-height:100%;background:#05000a}
-        body{display:flex;justify-content:center;align-items:flex-start;min-height:100vh;padding:10px;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;overflow-x:auto}
-        /* Locked dashboard display: the same layout is used on phone and desktop. */
-        .app-frame{position:relative;width:100%;max-width:480px;background:#0d0118;border-radius:20px;overflow:hidden;box-shadow:0 10px 30px rgba(0,0,0,.8);flex:0 0 480px}
-        .ui-wrapper{position:relative;width:100%;line-height:0}
-        .ui-wrapper img{width:100%;height:auto;display:block;pointer-events:none;user-select:none}
-        .laser-box{position:absolute;pointer-events:none;z-index:5;overflow:hidden}
-        .laser-box span{position:absolute;display:block}
-        .laser-box span:nth-child(1){top:0;left:-100%;width:100%;height:2px;animation:moveRight 2s linear infinite}
-        .laser-box span:nth-child(2){top:-100%;right:0;width:2px;height:100%;animation:moveDown 2s linear infinite .5s}
-        .laser-box span:nth-child(3){bottom:0;right:-100%;width:100%;height:2px;animation:moveLeft 2s linear infinite 1s}
-        .laser-box span:nth-child(4){bottom:-100%;left:0;width:2px;height:100%;animation:moveUp 2s linear infinite 1.5s}
-        @keyframes moveRight{0%{left:-100%}100%{left:100%}}
-        @keyframes moveDown{0%{top:-100%}100%{top:100%}}
-        @keyframes moveLeft{0%{right:-100%}100%{right:100%}}
-        @keyframes moveUp{0%{bottom:-100%}100%{bottom:100%}}
-        .sidebar-laser{top:10.5%;left:1.2%;width:18.5%;height:68%;border-radius:12px}
-        .sidebar-laser span:nth-child(1),.sidebar-laser span:nth-child(3){background:linear-gradient(90deg,transparent,#00d9ff,transparent)}
-        .sidebar-laser span:nth-child(2),.sidebar-laser span:nth-child(4){background:linear-gradient(180deg,transparent,#00d9ff,transparent)}
-        .banner-laser{top:10.5%;left:21%;width:77%;height:20.2%;border-radius:14px}
-        .banner-laser span:nth-child(1),.banner-laser span:nth-child(3){background:linear-gradient(90deg,transparent,#ff00ea,transparent)}
-        .banner-laser span:nth-child(2),.banner-laser span:nth-child(4){background:linear-gradient(180deg,transparent,#ff00ea,transparent)}
-        .bot-card-laser{top:32%;left:21%;width:77%;height:11.8%;border-radius:14px}
-        .bot-card-laser span:nth-child(1),.bot-card-laser span:nth-child(3){background:linear-gradient(90deg,transparent,#00f0ff,transparent)}
-        .bot-card-laser span:nth-child(2),.bot-card-laser span:nth-child(4){background:linear-gradient(180deg,transparent,#00f0ff,transparent)}
-        .shop-card-laser{top:45%;left:21%;width:77%;height:12.5%;border-radius:14px}
-        .shop-card-laser span:nth-child(1),.shop-card-laser span:nth-child(3){background:linear-gradient(90deg,transparent,#00ff66,transparent)}
-        .shop-card-laser span:nth-child(2),.shop-card-laser span:nth-child(4){background:linear-gradient(180deg,transparent,#00ff66,transparent)}
-        .games-card-laser{top:58.8%;left:21%;width:77%;height:12.5%;border-radius:14px}
-        .games-card-laser span:nth-child(1),.games-card-laser span:nth-child(3){background:linear-gradient(90deg,transparent,#ff5500,transparent)}
-        .games-card-laser span:nth-child(2),.games-card-laser span:nth-child(4){background:linear-gradient(180deg,transparent,#ff5500,transparent)}
-        .shoshal-card-laser{top:72.8%;left:21%;width:77%;height:12.5%;border-radius:14px}
-        .shoshal-card-laser span:nth-child(1),.shoshal-card-laser span:nth-child(3){background:linear-gradient(90deg,transparent,#bc00ff,transparent)}
-        .shoshal-card-laser span:nth-child(2),.shoshal-card-laser span:nth-child(4){background:linear-gradient(180deg,transparent,#bc00ff,transparent)}
-        .hotspot{position:absolute;display:flex;align-items:center;justify-content:center;text-decoration:none;cursor:pointer;background:rgba(255,255,255,0);border:0;z-index:10}
-        .hotspot:hover,.hotspot:focus,.hotspot:active{background:rgba(255,255,255,0);transform:none;box-shadow:none}
-        .text-label{font-family:'Orbitron',Arial,sans-serif;font-weight:800;font-size:13px;letter-spacing:1px;text-transform:uppercase;pointer-events:none;width:100%;text-align:center;line-height:1}
-        .label-coins{color:#FFE600;text-shadow:0 0 4px rgba(255,230,0,.8),0 0 10px rgba(255,180,0,.6)}
-        .label-gems{color:#FF66FF;text-shadow:0 0 4px rgba(255,102,255,.8),0 0 10px rgba(220,38,255,.6)}
-        .btn-coins{top:2.8%;left:36.5%;width:18.5%;height:3.2%;border-radius:20px}
-        .btn-gems{top:2.8%;left:56.5%;width:18.5%;height:3.2%;border-radius:20px}
-        .btn-notif{top:2.5%;left:81%;width:7.5%;height:3.8%;border-radius:50%}
-        .btn-profile{top:2.5%;left:89.2%;width:8.5%;height:3.8%;border-radius:50%}
-        .btn-home{top:11.8%;left:2.2%;width:16.5%;height:4.4%}
-        .btn-shop{top:18.8%;left:2.2%;width:16.5%;height:4.4%}
-        .btn-bot{top:23.9%;left:2.2%;width:16.5%;height:4.4%}
-        .btn-games{top:29%;left:2.2%;width:16.5%;height:4.4%}
-        .btn-rewards{top:34%;left:2.2%;width:16.5%;height:4.4%}
-        .btn-support{top:39%;left:2.2%;width:16.5%;height:4.4%}
-        .btn-channel-react{top:44%;left:2.2%;width:16.5%;height:4.4%}
-        .btn-channel-follow{top:49%;left:2.2%;width:16.5%;height:4.4%}
-        .btn-chat-group{top:54%;left:2.2%;width:16.5%;height:4.4%}
-        .btn-inbox{top:59%;left:2.2%;width:16.5%;height:4.4%}
-        .btn-feed{top:63.8%;left:2.2%;width:16.5%;height:4.4%}
-        .btn-ai{top:68.8%;left:2.2%;width:16.5%;height:4.4%}
-        .btn-about{top:73.5%;left:2.2%;width:16.5%;height:4.4%}
-        .btn-bot-pair-go{top:38.8%;left:38%;width:17.5%;height:3.4%;border-radius:20px}
-        .btn-connect-go{top:38.8%;left:77.5%;width:16.5%;height:3.4%;border-radius:20px}
-        .btn-shop-go{top:52.6%;left:39.5%;width:21.5%;height:3.6%;border-radius:20px}
-        .btn-games-go{top:66.8%;left:39.5%;width:21.5%;height:3.6%;border-radius:20px}
-        .btn-shoshal-go{top:80.8%;left:39.5%;width:21.5%;height:3.6%;border-radius:20px}
-        .btn-whatsapp-1{top:93%;left:68.2%;width:7.5%;height:3.8%;border-radius:50%}
-        .btn-whatsapp-2{top:93%;left:77.5%;width:7.5%;height:3.8%;border-radius:50%}
-        .btn-email{top:93%;left:87%;width:7.5%;height:3.8%;border-radius:50%}
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>Zanta Official Dashboard</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Rajdhani:wght@600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}body{background:#03010c;display:flex;justify-content:center;align-items:flex-start;min-height:100vh;font-family:'Rajdhani',sans-serif;background-image:radial-gradient(circle at 50% 0%,rgba(168,85,247,.2),transparent 70%),radial-gradient(circle at 50% 100%,rgba(14,165,233,.2),transparent 70%);padding:15px 10px}.app-container{width:100%;max-width:680px;background:rgba(8,4,18,.98);border:2px solid #a855f7;border-radius:24px;box-shadow:0 0 25px rgba(168,85,247,.35);overflow:hidden;display:flex;flex-direction:column;position:relative;min-height:85vh}header{display:flex;justify-content:space-between;align-items:center;padding:15px 25px;background:rgba(15,6,32,.95);border-bottom:2px solid #c084fc;position:sticky;top:0;z-index:100}.user-profile-section{display:flex;align-items:center;gap:12px}.user-dp{width:45px;height:45px;border-radius:50%;object-fit:cover;border:2px solid #00f0ff;box-shadow:0 0 10px #00f0ff}.user-name{font-family:'Orbitron',sans-serif;font-weight:800;font-size:18px;color:#fff;letter-spacing:1px;text-shadow:0 0 8px rgba(255,255,255,.5)}.header-actions{display:flex;align-items:center;gap:15px}.header-icon{color:#38bdf8;font-size:22px;cursor:pointer}.main-layout{display:flex;flex:1;align-items:stretch}.sidebar{width:80px;background:rgba(5,2,12,.98);border-right:2px solid #c084fc;display:flex;flex-direction:column;align-items:center;padding:20px 0;gap:14px;box-shadow:2px 0 10px rgba(192,132,252,.15)}.nav-icon{width:48px;height:48px;border-radius:12px;display:flex;justify-content:center;align-items:center;color:#fff;font-size:20px;cursor:pointer;text-decoration:none;border:1px solid rgba(255,255,255,.1);background:rgba(255,255,255,.03);flex-shrink:0}.nav-icon.active,.nav-icon:hover{background:#a855f7;border-color:#fff;box-shadow:0 0 15px rgba(168,85,247,.8);color:#fff;transform:scale(1.04)}.content{flex:1;padding:20px;display:flex;flex-direction:column;gap:16px}.status-banner{background:linear-gradient(135deg,rgba(88,28,135,.7),rgba(15,6,32,.95));border:2px solid #c084fc;border-radius:18px;padding:18px 22px;display:flex;flex-direction:column;gap:12px;box-shadow:0 0 15px rgba(192,132,252,.3)}.bot-title-area{text-align:center}.bot-title-area h1{font-family:'Orbitron',sans-serif;font-size:24px;font-weight:800;color:#00f0ff;text-shadow:0 0 12px #00f0ff;letter-spacing:2px}.stats-area{display:flex;justify-content:space-between;align-items:center;width:100%}.stat-pill{display:flex;align-items:center;gap:8px;background:rgba(0,0,0,.5);padding:6px 14px;border-radius:20px;border:1.5px solid rgba(255,255,255,.2)}.stat-pill.coins{border-color:#eab308;box-shadow:0 0 10px rgba(234,179,8,.4)}.stat-pill.coins i{color:#eab308}.stat-pill.gems{border-color:#ec4899;box-shadow:0 0 10px rgba(236,72,153,.4)}.stat-pill.gems i{color:#ec4899}.stat-value{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700;color:#fff}.neon-box{border-radius:16px;padding:18px 20px;display:flex;align-items:center;justify-content:space-between;position:relative;background:rgba(12,6,28,.85);transition:.2s}.neon-box:hover{transform:scale(1.01) translateY(-2px);z-index:5}.box-content{display:flex;align-items:center;gap:16px}.box-icon{font-size:28px}.box-text h2{font-size:19px;font-weight:750;color:#fff}.box-text p{font-size:13px;color:rgba(255,255,255,.75)}.go-btn{display:inline-block;margin-top:6px;padding:4px 14px;border-radius:15px;font-family:'Orbitron',sans-serif;font-size:11px;font-weight:750;color:#fff;text-decoration:none;background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.6);cursor:pointer}.go-btn:hover{background:#fff;color:#000}.right-illustration{font-size:38px;opacity:.9}.neon-cyan{border:1.5px solid #38bdf8;box-shadow:0 0 12px rgba(56,189,248,.25)}.neon-cyan .box-icon,.neon-cyan .right-illustration{color:#38bdf8}.neon-pink{border:1.5px solid #f472b6;box-shadow:0 0 12px rgba(244,114,182,.25)}.neon-pink .box-icon,.neon-pink .right-illustration{color:#f472b6}.neon-green{border:1.5px solid #4ade80;box-shadow:0 0 12px rgba(74,222,128,.25)}.neon-green .box-icon,.neon-green .right-illustration{color:#4ade80}.neon-orange{border:1.5px solid #fb923c;box-shadow:0 0 12px rgba(251,146,60,.25)}.neon-orange .box-icon,.neon-orange .right-illustration{color:#fb923c}.neon-purple{border:1.5px solid #c084fc;box-shadow:0 0 12px rgba(192,132,252,.25)}.neon-purple .box-icon,.neon-purple .right-illustration{color:#c084fc}.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:15px}.offer-page{display:none;position:fixed;inset:0;width:100vw;height:100vh;background:#03010c;z-index:9999;flex-direction:column;padding:20px;overflow-y:auto}.offer-page.open{display:flex}.offer-header{display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid #a855f7;padding-bottom:15px;margin-bottom:20px;background:rgba(15,6,32,.95);position:sticky;top:0;z-index:10}.offer-header h2{font-family:'Orbitron',sans-serif;color:#00f0ff;font-size:22px;text-shadow:0 0 10px #00f0ff}.back-btn{background:#a855f7;color:#fff;border:none;padding:8px 18px;border-radius:12px;cursor:pointer;font-weight:700;font-family:'Orbitron',sans-serif;box-shadow:0 0 12px #a855f7}.offer-section-box{background:rgba(15,8,35,.9);border:2px solid #c084fc;border-radius:18px;padding:20px;margin-bottom:18px;box-shadow:0 0 15px rgba(192,132,252,.25);display:flex;flex-direction:column;gap:12px;max-width:700px;margin-left:auto;margin-right:auto;width:100%}.offer-title{font-family:'Orbitron',sans-serif;font-size:16px;color:#fff;display:flex;align-items:center;gap:10px}.offer-desc{font-size:13px;color:rgba(255,255,255,.85)}.claim-actions{display:flex;gap:12px}.claim-btn{flex:1;padding:10px;border-radius:12px;border:none;font-family:'Orbitron',sans-serif;font-weight:700;font-size:12px;cursor:pointer}.btn-coin{background:rgba(234,179,8,.2);color:#eab308;border:1.5px solid #eab308;box-shadow:0 0 8px rgba(234,179,8,.3)}.btn-gem{background:rgba(236,72,153,.2);color:#ec4899;border:1.5px solid #ec4899;box-shadow:0 0 8px rgba(236,72,153,.3)}.btn-action{background:#00f0ff;color:#000;border:none;text-decoration:none;text-align:center;padding:10px;border-radius:12px;font-family:'Orbitron',sans-serif;font-weight:700;font-size:13px;box-shadow:0 0 10px #00f0ff;display:block}.claim-btn:disabled{opacity:.5;cursor:not-allowed;filter:grayscale(100%)}.dice-container{text-align:center}.dice-icon{font-size:65px;color:#a855f7;cursor:pointer;text-shadow:0 0 20px #a855f7;display:inline-block;margin:10px 0}.dice-animating{animation:diceSpin .6s ease-in-out infinite}@keyframes diceSpin{0%{transform:rotate(0) scale(1)}50%{transform:rotate(180deg) scale(1.2);color:#00f0ff}100%{transform:rotate(360deg) scale(1)}}#reward-popup{display:none;position:fixed;inset:0;background:rgba(0,0,0,.8);z-index:99999;justify-content:center;align-items:center}.popup-card{background:linear-gradient(135deg,#1e053a,#09031c);border:2.5px solid #00f0ff;border-radius:20px;padding:30px;text-align:center;max-width:350px;width:90%;box-shadow:0 0 30px #00f0ff,inset 0 0 15px rgba(0,240,255,.4)}.popup-card h3{font-family:'Orbitron',sans-serif;color:#00f0ff;font-size:22px;margin-bottom:10px}.popup-card p{font-size:16px;color:#fff;margin-bottom:20px;font-weight:700}.popup-btn{background:#a855f7;color:#fff;border:none;padding:10px 25px;border-radius:15px;font-family:'Orbitron',sans-serif;font-weight:700;font-size:14px;cursor:pointer}.desktop-lock{display:none;position:fixed;inset:0;background:#05000a;z-index:999999;align-items:center;justify-content:center;padding:22px;text-align:center}.desktop-lock.show{display:flex}.desktop-lock-card{width:min(420px,94vw);padding:30px 22px;border:2px solid #a855f7;border-radius:24px;background:linear-gradient(145deg,#17052c,#050914);box-shadow:0 0 30px #a855f777;color:#fff}.desktop-lock-card i{font-size:48px;color:#00e5ff;text-shadow:0 0 20px #00e5ff;margin-bottom:18px}.desktop-lock-card h2{font-family:'Orbitron';color:#fff;margin-bottom:12px}.desktop-lock-card p{color:#c7d2fe;line-height:1.7;font-size:15px}.desktop-lock-card b{color:#ff4fd8}footer{background:rgba(15,6,32,.98);border-top:2px solid #c084fc;padding:10px 15px;display:flex;align-items:center;justify-content:space-between;overflow:hidden}.marquee-container{flex:1;overflow:hidden;white-space:nowrap}.marquee-text{display:inline-block;animation:marquee 22s linear infinite;font-size:13px;font-weight:700;color:#f472b6;text-shadow:0 0 8px rgba(244,114,182,.5);padding:0 10px}@keyframes marquee{0%{transform:translateX(0)}100%{transform:translateX(-100%)}}.boundary-line-right{color:#00f0ff;font-weight:900;font-size:16px;padding-left:4px}.footer-whatsapp{display:flex;align-items:center;justify-content:center;width:35px;height:35px;background:#22c55e;color:#fff;border-radius:50%;font-size:18px;text-decoration:none;box-shadow:0 0 12px #22c55e;margin-left:10px;flex-shrink:0}@media(max-width:560px){body{padding:0}.app-container{max-width:none;min-height:100vh;border-radius:0;border-left:0;border-right:0}.grid-2{grid-template-columns:1fr}.sidebar{width:66px;padding-top:14px;gap:9px}.nav-icon{width:42px;height:42px;font-size:17px}.content{padding:12px}.user-name{font-size:14px}.user-dp{width:38px;height:38px}.right-illustration{font-size:30px}}
+</style>
 </head>
 <body>
-<div class="app-frame">
-  <div class="ui-wrapper">
-    <img src="https://files.catbox.moe/6n1a6d.png" alt="Zanta Official Dashboard Design">
-    <div class="laser-box sidebar-laser"><span></span><span></span><span></span><span></span></div>
-    <div class="laser-box banner-laser"><span></span><span></span><span></span><span></span></div>
-    <div class="laser-box bot-card-laser"><span></span><span></span><span></span><span></span></div>
-    <div class="laser-box shop-card-laser"><span></span><span></span><span></span><span></span></div>
-    <div class="laser-box games-card-laser"><span></span><span></span><span></span><span></span></div>
-    <div class="laser-box shoshal-card-laser"><span></span><span></span><span></span><span></span></div>
-
-    <a href="/shop" class="hotspot btn-coins" title="Coins"><span class="text-label label-coins">COINS</span></a>
-    <a href="/shop" class="hotspot btn-gems" title="Gems"><span class="text-label label-gems">GEMS</span></a>
-    <a href="/support#chats" class="hotspot btn-notif" title="Notifications"></a>
-    <a href="/user-dashboard.html#profile" class="hotspot btn-profile" title="Profile"></a>
-
-    <a href="/" class="hotspot btn-home" title="Home"></a>
-    <a href="/shop" class="hotspot btn-shop" title="Shop"></a>
-    <a href="/user-dashboard.html#pair" class="hotspot btn-bot" title="Bot"></a>
-    <a href="/game/game.html" class="hotspot btn-games" title="Games"></a>
-    <a href="/shop" class="hotspot btn-rewards" title="Rewards"></a>
-    <a href="/support#chats" class="hotspot btn-support" title="Support"></a>
-    <a href="/react" class="hotspot btn-channel-react" title="Channel React"></a>
-    <a href="https://whatsapp.com/channel/0029VaQ6YbG1CjQxXQqQqQqQ" target="_blank" rel="noopener" class="hotspot btn-channel-follow" title="Channel Follow"></a>
-    <a href="/support#groups" class="hotspot btn-chat-group" title="Chat Group"></a>
-    <a href="/support#chats" class="hotspot btn-inbox" title="Inbox"></a>
-    <a href="/support#feed" class="hotspot btn-feed" title="Feed"></a>
-    <a href="/ai" class="hotspot btn-ai" title="AI"></a>
-    <a href="/user-dashboard.html#settings" class="hotspot btn-about" title="About"></a>
-
-    <a href="/user-dashboard.html#pair" class="hotspot btn-bot-pair-go" title="Bot Pair GO"></a>
-    <a href="/user-dashboard.html#pair" class="hotspot btn-connect-go" title="Connect Your Bot GO"></a>
-    <a href="/shop" class="hotspot btn-shop-go" title="Shop GO"></a>
-    <a href="/game/game.html" class="hotspot btn-games-go" title="Games GO"></a>
-    <a href="/support#feed" class="hotspot btn-shoshal-go" title="Social GO"></a>
-
-    <a href="https://wa.me/94760879639" target="_blank" rel="noopener" class="hotspot btn-whatsapp-1" title="WhatsApp"></a>
-    <a href="https://wa.me/94760879639" target="_blank" rel="noopener" class="hotspot btn-whatsapp-2" title="WhatsApp Group"></a>
-    <a href="mailto:zantaxmd2@gmail.com" class="hotspot btn-email" title="Email"></a>
-  </div>
+<div id="desktopLock" class="desktop-lock"><div class="desktop-lock-card"><i class="fa-solid fa-mobile-screen-button"></i><h2>DESKTOP MODE BLOCKED</h2><p>ඔබගේ ෆෝන් browser එකේ <b>Desktop Site / Desktop Mode</b> ON කරලා තියෙනවා.<br><br>කරුණාකර <b>Desktop Mode OFF</b> කරලා page එක Reload කරන්න.</p></div></div>
+<div class="app-container" id="siteApp">
+<header><div class="user-profile-section"><img id="userDp" src="https://via.placeholder.com/150" alt="User DP" class="user-dp"><span id="userName" class="user-name">ZANTA USER</span></div><div class="header-actions"><i class="fa-solid fa-bell header-icon" onclick="location.href='/notifications.html'"></i><i class="fa-solid fa-circle-user header-icon" onclick="location.href='/profile.html'"></i></div></header>
+<div class="main-layout">
+<div class="sidebar">
+<a href="/" class="nav-icon active" title="Home"><i class="fa-solid fa-house"></i></a>
+<a href="/shop.html" class="nav-icon" title="Shop"><i class="fa-solid fa-cart-shopping"></i></a>
+<a href="/bot.html" class="nav-icon" title="Bot"><i class="fa-solid fa-robot"></i></a>
+<a href="/games.html" class="nav-icon" title="Games"><i class="fa-solid fa-gamepad"></i></a>
+<a href="/rewards.html" class="nav-icon" title="Rewards"><i class="fa-solid fa-gift"></i></a>
+<a href="/support" class="nav-icon" title="Support"><i class="fa-solid fa-headset"></i></a>
+<a href="/channel-react.html" class="nav-icon" title="Channel React"><i class="fa-solid fa-bullhorn"></i></a>
+<a href="/channel-follow.html" class="nav-icon" title="Channel Follow"><i class="fa-solid fa-user-plus"></i></a>
+<a href="/support#groups" class="nav-icon" title="Chat Group"><i class="fa-solid fa-users"></i></a>
+<a href="/support#chats" class="nav-icon" title="Inbox Chat"><i class="fa-solid fa-comment-dots"></i></a>
+<a href="/support#feed" class="nav-icon" title="Feed"><i class="fa-solid fa-newspaper"></i></a>
+<a href="/ai.html" class="nav-icon" title="AI"><i class="fa-solid fa-brain"></i></a>
+<a href="/about.html" class="nav-icon" title="About"><i class="fa-solid fa-circle-info"></i></a>
 </div>
-
-<!-- Existing ad integrations -->
-<script data-cfasync="false" src="https://abscloud.org/1/a40d2f9eadded153b407acc4074354c9"></script>
-<script data-cfasync="false" src="https://bauval.org/14/2335d88141ba14d4a4e4d25215d4dcfd"></script>
+<div class="content">
+<div class="status-banner"><div class="bot-title-area"><h1>ZANTA-XMD</h1></div><div class="stats-area"><div class="stat-pill coins"><i class="fa-solid fa-coins"></i><span class="stat-value" id="total-coins">0</span></div><div class="stat-pill gems"><i class="fa-solid fa-gem"></i><span class="stat-value" id="total-gems">0</span></div></div></div>
+<div class="grid-2"><div class="neon-box neon-cyan"><div class="box-content"><i class="fa-solid fa-robot box-icon"></i><div class="box-text"><h2>Bot Pair</h2><p>Pair easily</p><a href="/bot.html" class="go-btn">GO &gt;</a></div></div></div><div class="neon-box neon-pink"><div class="box-content"><i class="fa-solid fa-tags box-icon"></i><div class="box-text"><h2>Offer</h2><p>Special deals</p><button class="go-btn" onclick="openOfferPage()">GO &gt;</button></div></div></div></div>
+<div class="neon-box neon-green"><div class="box-content"><i class="fa-solid fa-cart-shopping box-icon"></i><div class="box-text"><h2>Shop</h2><p>Buy amazing items</p><a href="/shop.html" class="go-btn">GO &gt;</a></div></div><i class="fa-solid fa-gift right-illustration"></i></div>
+<div class="neon-box neon-orange"><div class="box-content"><i class="fa-solid fa-gamepad box-icon"></i><div class="box-text"><h2>Games</h2><p>Play exciting games</p><a href="/games.html" class="go-btn">GO &gt;</a></div></div><i class="fa-solid fa-headset right-illustration"></i></div>
+<div class="neon-box neon-purple"><div class="box-content"><i class="fa-solid fa-share-nodes box-icon"></i><div class="box-text"><h2>Shoshal</h2><p>Connect and share</p><a href="/shoshal.html" class="go-btn">GO &gt;</a></div></div><i class="fa-solid fa-comments right-illustration"></i></div>
+<div class="neon-box neon-cyan"><div class="box-content"><i class="fa-solid fa-code box-icon"></i><div class="box-text"><h2>Commands</h2><p>Use helpful commands</p><a href="/commands.html" class="go-btn">GO &gt;</a></div></div><i class="fa-solid fa-laptop-code right-illustration"></i></div>
+<div class="neon-box neon-green"><div class="box-content"><i class="fa-solid fa-cloud box-icon"></i><div class="box-text"><h2>API</h2><p>Get your bot API</p><a href="/api.html" class="go-btn">GO &gt;</a></div></div><i class="fa-solid fa-gears right-illustration"></i></div>
+<div class="neon-box neon-orange"><div class="box-content"><i class="fa-solid fa-gear box-icon"></i><div class="box-text"><h2>Settings</h2><p>Customize your bot</p><a href="/settings.html" class="go-btn">GO &gt;</a></div></div><i class="fa-solid fa-sliders right-illustration"></i></div>
+<div class="neon-box neon-purple"><div class="box-content"><i class="fa-solid fa-wrench box-icon"></i><div class="box-text"><h2>Tools</h2><p>Use useful tools</p><a href="/tools.html" class="go-btn">GO &gt;</a></div></div><i class="fa-solid fa-toolbox right-illustration"></i></div>
+<div class="neon-box neon-pink"><div class="box-content"><i class="fa-solid fa-crown box-icon"></i><div class="box-text"><h2>Premium</h2><p>Unlock VIP features</p><a href="/premium.html" class="go-btn">GO &gt;</a></div></div><i class="fa-solid fa-gem right-illustration"></i></div>
+<div class="neon-box neon-cyan"><div class="box-content"><i class="fa-solid fa-face-smile box-icon"></i><div class="box-text"><h2>Channel React</h2><p>Auto reaction settings</p><a href="/channel-react.html" class="go-btn">GO &gt;</a></div></div><i class="fa-solid fa-heart right-illustration"></i></div>
+<div class="neon-box neon-green"><div class="box-content"><i class="fa-solid fa-brain box-icon"></i><div class="box-text"><h2>AI</h2><p>Smart chatbot & features</p><a href="/ai.html" class="go-btn">GO &gt;</a></div></div><i class="fa-solid fa-microchip right-illustration"></i></div>
+<div class="neon-box neon-orange"><div class="box-content"><i class="fa-solid fa-music box-icon"></i><div class="box-text"><h2>Music Settings</h2><p>Audio player & filters</p><a href="/music-settings.html" class="go-btn">GO &gt;</a></div></div><i class="fa-solid fa-headphones-simple right-illustration"></i></div>
+<div class="neon-box neon-purple"><div class="box-content"><i class="fa-solid fa-user-shield box-icon"></i><div class="box-text"><h2>Privacy</h2><p>Security & permissions</p><a href="/privacy.html" class="go-btn">GO &gt;</a></div></div><i class="fa-solid fa-lock right-illustration"></i></div>
+<div class="neon-box neon-pink"><div class="box-content"><i class="fa-solid fa-chart-line box-icon"></i><div class="box-text"><h2>Analysis</h2><p>Usage stats & graphs</p><a href="/analysis.html" class="go-btn">GO &gt;</a></div></div><i class="fa-solid fa-chart-pie right-illustration"></i></div>
+<div class="neon-box neon-cyan"><div class="box-content"><i class="fa-solid fa-bell box-icon"></i><div class="box-text"><h2>Notifications</h2><p>Alerts & webhook logs</p><a href="/notifications.html" class="go-btn">GO &gt;</a></div></div><i class="fa-solid fa-bullhorn right-illustration"></i></div>
+<div class="neon-box neon-green"><div class="box-content"><i class="fa-solid fa-life-ring box-icon"></i><div class="box-text"><h2>Support / Help</h2><p>Get 24/7 assistance</p><a href="/support" class="go-btn">GO &gt;</a></div></div><i class="fa-solid fa-handshake-angle right-illustration"></i></div>
+<div class="neon-box neon-purple"><div class="box-content"><i class="fa-solid fa-shapes box-icon"></i><div class="box-text"><h2>Other Options</h2><p>Explore all extra options</p><a href="/other.html" class="go-btn">GO &gt;</a></div></div><i class="fa-solid fa-star right-illustration"></i></div>
+</div></div>
+<footer><div class="marquee-container"><div class="marquee-text">ZANTA-XMD OFFICIAL CREATED BY SURANGA CHAMITH &nbsp; | &nbsp; CONTACT WHATSAPP 94760879639 / OR PHONE 0760264995 &nbsp; | &nbsp; Welcome to the Ultimate Next-Gen WhatsApp Bot Experience!</div></div><span class="boundary-line-right">❘</span><a href="https://wa.me/94760879639" target="_blank" rel="noopener" class="footer-whatsapp"><i class="fa-brands fa-whatsapp"></i></a></footer>
+</div>
+<div id="offer-page" class="offer-page"><div class="offer-header"><h2><i class="fa-solid fa-gift"></i> ZANTA OFFERS</h2><button class="back-btn" onclick="closeOfferPage()">BACK</button></div><div class="offer-section-box"><div class="offer-title"><i class="fa-solid fa-calendar-day" style="color:#00f0ff"></i> Daily Reward Claim</div><div class="offer-desc">Claim random Coins (10-50) & Gems (1-10). Once per day each.</div><div class="claim-actions"><button class="claim-btn btn-coin" id="daily-coin-btn" onclick="claimReward('daily_coin')">Claim Coins (<span id="rand-coin-val">—</span>)</button><button class="claim-btn btn-gem" id="daily-gem-btn" onclick="claimReward('daily_gem')">Claim Gems (<span id="rand-gem-val">—</span>)</button></div></div><div class="offer-section-box"><div class="offer-title">WhatsApp Channel Follow Offer</div><div class="offer-desc">Follow the channel, then verify & claim.</div><a href="https://whatsapp.com/channel/0029VbDohvvHgZWVCvty5r3X" target="_blank" rel="noopener" onclick="sessionStorage.setItem('waVisited','1')" class="btn-action">1. Follow WhatsApp Channel</a><button class="claim-btn btn-coin" id="wa-claim-btn" onclick="claimReward('whatsapp')">2. Verify & Claim (50 Coins & 5 Gems)</button></div><div class="offer-section-box"><div class="offer-title">YouTube Channel Subscribe Offer</div><div class="offer-desc">Subscribe, then verify & claim.</div><a href="https://youtube.com/@zanta-beats?si=k-LHiFHAagwRdiPp" target="_blank" rel="noopener" onclick="sessionStorage.setItem('ytVisited','1')" class="btn-action">1. Subscribe YouTube Channel</a><button class="claim-btn btn-gem" id="yt-claim-btn" onclick="claimReward('youtube')">2. Verify & Claim (50 Coins & 10 Gems)</button></div><div class="offer-section-box dice-container"><div class="offer-title" style="justify-content:center">Lucky Dice Roll (Every 2 Days)</div><div class="offer-desc">Roll the dice for a random coin & gem reward.</div><div id="dice-display" class="dice-icon">🎲</div><button class="claim-btn btn-coin" id="dice-btn" onclick="claimReward('dice')" style="width:200px;align-self:center">Roll Dice Now!</button><div id="dice-result" style="font-size:14px;color:#38bdf8;margin-top:8px;font-weight:700"></div></div><div class="offer-section-box" style="border-color:#00f0ff"><div class="offer-title">Developer Special Gift</div><div class="offer-desc">Claim the daily developer gift.</div><button class="claim-btn btn-coin" id="dev-gift-btn" onclick="claimReward('dev_gift')">Claim Developer Gift</button></div></div>
+<div id="reward-popup"><div class="popup-card"><h3>🎉 REWARD CLAIMED!</h3><p id="popup-msg"></p><button class="popup-btn" onclick="closePopup()">AWESOME!</button></div></div>
+<script>
+const $=id=>document.getElementById(id);
+function isPhone(){return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent)||navigator.maxTouchPoints>0}
+function desktopModeOn(){return isPhone() && (window.innerWidth>=700 || (window.screen.width>=700 && window.innerWidth>=650))}
+function enforceMode(){const locked=desktopModeOn();$('desktopLock').classList.toggle('show',locked);$('siteApp').style.display=locked?'none':'';document.body.style.overflow=locked?'hidden':'';return !locked}
+async function api(url,opts={}){const r=await fetch(url,{credentials:'same-origin',...opts,headers:{'Content-Type':'application/json',...(opts.headers||{})}});const d=await r.json().catch(()=>({}));if(!r.ok)throw new Error(d.error||'Request failed');return d}
+async function loadMe(){try{const d=await api('/api/dashboard');if(!d.user){location.href='/user-dashboard.html';return}const u=d.user;$('userName').textContent=u.username||'ZANTA USER';$('total-coins').textContent=Number(u.coins||0).toLocaleString();$('total-gems').textContent=Number(u.gems||0).toLocaleString();updateClaimButtons(u.claims||{});}catch(e){console.warn(e)}}
+function updateClaimButtons(c){const today=new Date().toISOString().slice(0,10);if(c.daily_coin===today)$('daily-coin-btn').disabled=true;if(c.daily_gem===today)$('daily-gem-btn').disabled=true;if(c.whatsapp)$('wa-claim-btn').disabled=true;if(c.youtube)$('yt-claim-btn').disabled=true;if(c.dev_gift===today)$('dev-gift-btn').disabled=true;if(c.dice&&Date.now()-new Date(c.dice).getTime()<172800000)$('dice-btn').disabled=true}
+function openOfferPage(){if(enforceMode())$('offer-page').classList.add('open')}
+function closeOfferPage(){$('offer-page').classList.remove('open')}
+function showPopup(msg){$('popup-msg').textContent=msg;$('reward-popup').style.display='flex'}function closePopup(){$('reward-popup').style.display='none'}
+async function claimReward(type){try{if(type==='whatsapp'&&!sessionStorage.getItem('waVisited'))return alert('Please follow the WhatsApp channel first.');if(type==='youtube'&&!sessionStorage.getItem('ytVisited'))return alert('Please subscribe to the YouTube channel first.');if(type==='dice'){$('dice-btn').disabled=true;$('dice-display').classList.add('dice-animating')}const d=await api('/api/rewards/claim',{method:'POST',body:JSON.stringify({type})});$('total-coins').textContent=Number(d.user.coins||0).toLocaleString();$('total-gems').textContent=Number(d.user.gems||0).toLocaleString();if(type==='dice'){$('dice-display').classList.remove('dice-animating');$('dice-result').textContent=d.message}$('popup-msg').textContent=d.message;showPopup(d.message);updateClaimButtons(d.user.claims||{});}catch(e){if(type==='dice'){$('dice-btn').disabled=false;$('dice-display').classList.remove('dice-animating')}showPopup(e.message)}}
+if(location.hash==='#offers')setTimeout(openOfferPage,100);window.addEventListener('resize',enforceMode);window.addEventListener('orientationchange',()=>setTimeout(enforceMode,200));enforceMode();loadMe();
+</script>
 </body>
 </html>
