@@ -58,6 +58,8 @@ module.exports = function attachDashboard(app, options) {
   app.get('/shop.html',(req,res)=>res.sendFile(require('path').join(__dirname,'public','shop.html')));
   app.get('/ai',(req,res)=>res.sendFile(require('path').join(__dirname,'public','ai.html')));
   app.get('/ai.html',(req,res)=>res.sendFile(require('path').join(__dirname,'public','ai.html')));
+  app.get('/react',(req,res)=>res.sendFile(require('path').join(__dirname,'public','react.html')));
+  app.get('/react.html',(req,res)=>res.sendFile(require('path').join(__dirname,'public','react.html')));
   app.get('/game/game.html',(req,res)=>{res.set('Cache-Control','no-store');res.sendFile(require('path').join(__dirname,'public','game','game.html'));});
   // Contact menu image assets
   app.get('/contact-icons.png',(req,res)=>res.sendFile(require('path').join(__dirname,'public','contact-icons.png')));
