@@ -10,7 +10,7 @@ module.exports = function attachDashboard(app, options) {
     email:{type:String,required:true,unique:true,lowercase:true,trim:true},
     username:{type:String,required:true,unique:true,trim:true,lowercase:true},
     passwordHash:{type:String,default:''}, passwordSalt:{type:String,default:''}, googleSub:{type:String,default:'',index:true},
-    coins:{type:Number,default:0,min:0}, gems:{type:Number,default:0,min:0}, gameRewardDay:{type:String,default:''}, taskClaims:{type:[String],default:[]}, rewardClaims:{type:Schema.Types.Mixed,default:{}}, unlockedApps:{type:[String],default:[]}, lastDaily:{type:String,default:''},
+    coins:{type:Number,default:0,min:0}, gameRewardDay:{type:String,default:''}, taskClaims:{type:[String],default:[]}, unlockedApps:{type:[String],default:[]}, lastDaily:{type:String,default:''},
     createdAt:{type:Date,default:Date.now}, hidden:{type:Boolean,default:false}, lastSeen:{type:Date,default:null}, onlineUntil:{type:Date,default:null}
   },{collection:'zanta_web_users'}));
   const EmailOtp = mongoose.models.ZantaEmailOtp || mongoose.model('ZantaEmailOtp', new Schema({email:{type:String,required:true,index:true},codeHash:{type:String,required:true},expiresAt:{type:Date,required:true,index:{expires:0}},lastSentAt:{type:Date,default:Date.now},attempts:{type:Number,default:0}},{collection:'zanta_email_otps'}));
@@ -36,7 +36,7 @@ module.exports = function attachDashboard(app, options) {
   const isOwnerIdentity=email=>String(email||'').trim().toLowerCase()===String(process.env.ADMIN_EMAIL||'').trim().toLowerCase();
   const GAME_OWNER_EMAIL=String(process.env.OWNER_EMAIL||'zantaxmd2@gmail.com').trim().toLowerCase();
   const isGameOwner=u=>String(u?.email||'').trim().toLowerCase()===GAME_OWNER_EMAIL;
-  const cleanUser=u=>({id:String(u._id),email:u.email,username:u.username,coins:Number(u.coins||0),gems:Number(u.gems||0),taskClaims:u.taskClaims||[],claims:u.rewardClaims||{},createdAt:u.createdAt,verified:!!u.verified||isOwnerIdentity(u.email)});
+  const cleanUser=u=>({id:String(u._id),email:u.email,username:u.username,coins:u.coins,taskClaims:u.taskClaims||[],createdAt:u.createdAt,verified:!!u.verified||isOwnerIdentity(u.email)});
   const cookie=(req,max)=>`${COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=${max}${process.env.NODE_ENV==='production'?'; Secure':''}`;
   function token(req){for(const p of (req.headers.cookie||'').split(';')){const i=p.indexOf('=');if(i>0&&p.slice(0,i).trim()===COOKIE)return decodeURIComponent(p.slice(i+1));}return '';}
   async function session(res,req,u){const t=crypto.randomBytes(32).toString('hex');await Session.create({tokenHash:hash(t),userId:u._id,expiresAt:new Date(Date.now()+30*864e5)});res.setHeader('Set-Cookie',`${COOKIE}=${t}; Path=/; HttpOnly; SameSite=Lax; Max-Age=2592000${process.env.NODE_ENV==='production'?'; Secure':''}`);}
@@ -54,8 +54,6 @@ module.exports = function attachDashboard(app, options) {
   app.get('/admin.html',(req,res)=>res.sendFile(require('path').join(__dirname,'admin.html')));
   app.get('/shop',(req,res)=>res.sendFile(require('path').join(__dirname,'public','shop.html')));
   app.get('/shop.html',(req,res)=>res.sendFile(require('path').join(__dirname,'public','shop.html')));
-  const featurePages=['bot','offer','gift','rewards','games','shoshal','commands','api','settings','tools','premium','channel-react','channel-follow','music-settings','privacy','analysis','notifications','profile','about','other'];
-  featurePages.forEach(name=>{app.get('/'+name+'.html',(req,res)=>res.sendFile(require('path').join(__dirname,'public',name+'.html')));});
   app.get('/ai',(req,res)=>res.sendFile(require('path').join(__dirname,'public','ai.html')));
   app.get('/ai.html',(req,res)=>res.sendFile(require('path').join(__dirname,'public','ai.html')));
   app.get('/game/game.html',(req,res)=>{res.set('Cache-Control','no-store');res.sendFile(require('path').join(__dirname,'public','game','game.html'));});
@@ -75,10 +73,7 @@ module.exports = function attachDashboard(app, options) {
     return res.sendFile(require('path').join(__dirname, 'public', 'user-dashboard.html'));
   });
   // Serve the same dashboard shell at the private owner-console URL.
-  app.get('/group.html',(req,res)=>res.redirect('/support#groups'));
-  app.get('/chat.html',(req,res)=>res.redirect('/support#chats'));
-  app.get('/feed.html',(req,res)=>res.redirect('/support#feed'));
-  app.get('/users.html',(req,res)=>res.redirect('/support#users'));
+  app.get('/pair',(req,res)=>res.sendFile(require('path').join(__dirname,'public','pair.html')));
   app.get('/support',(req,res)=>res.sendFile(require('path').join(__dirname,'public','support.html')));
   app.get('/api/support/members',auth,async(req,res)=>{try{await ensureSupportGroup();const users=await User.find({hidden:{$ne:true}}).select('username email verified createdAt').sort({createdAt:1}).limit(1000).lean();res.json({users:users.map(u=>({id:String(u._id),username:u.username,email:u.email,verified:!!u.verified}))});}catch(e){res.status(500).json({error:'Could not load support members.'})}});
   app.get('/zanta-owner-console-7f3a',(req,res)=>res.sendFile(require('path').join(__dirname,'public','index.html')));
@@ -125,52 +120,6 @@ module.exports = function attachDashboard(app, options) {
   app.post('/api/auth/register',(req,res)=>res.status(403).json({error:'Direct registration is disabled. Verify your Gmail with OTP first.'}));
   app.post('/api/auth/login',async(req,res)=>{try{const id=String(req.body.identity||'').trim().toLowerCase(),p=String(req.body.password||'');const u=await User.findOne({$or:[{email:id},{username:id}]});if(!u||!u.passwordHash||!u.passwordSalt||!crypto.timingSafeEqual(Buffer.from(await passHash(p,u.passwordSalt),'hex'),Buffer.from(u.passwordHash,'hex')))return res.status(401).json({error:'Invalid login details.'});await session(res,req,u);res.json({user:cleanUser(u)});}catch{res.status(500).json({error:'Login failed.'});}});
   app.post('/api/auth/logout',async(req,res)=>{const t=token(req);if(t)await Session.deleteOne({tokenHash:hash(t)});res.setHeader('Set-Cookie',cookie(req,0));res.json({success:true});});
-  app.post('/api/rewards/claim',auth,async(req,res)=>{
-    try{
-      const type=String(req.body.type||'').trim();
-      const now=new Date();
-      const day=now.toISOString().slice(0,10);
-      const allowed=['daily_coin','daily_gem','whatsapp','youtube','dice','dev_gift'];
-      if(!allowed.includes(type))return res.status(400).json({error:'Invalid reward.'});
-      let filter={_id:req.user._id};
-      let update={};
-      let message='';
-      if(type==='daily_coin'){
-        const reward=(crypto.randomInt(1,6))*10;
-        filter['rewardClaims.daily_coin']={$ne:day};
-        update={$inc:{coins:reward},$set:{'rewardClaims.daily_coin':day,'rewardClaims.daily_coin_amount':reward}};
-        message=`Successfully claimed ${reward} Coins!`;
-      }else if(type==='daily_gem'){
-        const reward=crypto.randomInt(1,11);
-        filter['rewardClaims.daily_gem']={$ne:day};
-        update={$inc:{gems:reward},$set:{'rewardClaims.daily_gem':day,'rewardClaims.daily_gem_amount':reward}};
-        message=`Successfully claimed ${reward} Gems!`;
-      }else if(type==='whatsapp'){
-        filter['rewardClaims.whatsapp']={$ne:true};
-        update={$inc:{coins:50,gems:5},$set:{'rewardClaims.whatsapp':true}};
-        message='Congratulations! Received 50 Coins & 5 Gems.';
-      }else if(type==='youtube'){
-        filter['rewardClaims.youtube']={$ne:true};
-        update={$inc:{coins:50,gems:10},$set:{'rewardClaims.youtube':true}};
-        message='Congratulations! Received 50 Coins & 10 Gems.';
-      }else if(type==='dev_gift'){
-        filter['rewardClaims.dev_gift']={$ne:day};
-        update={$inc:{coins:100,gems:20},$set:{'rewardClaims.dev_gift':day}};
-        message='Developer Gift Claimed: +100 Coins & +20 Gems!';
-      }else if(type==='dice'){
-        const last=req.user.rewardClaims?.dice?new Date(req.user.rewardClaims.dice):null;
-        if(last && now-last<172800000)return res.status(409).json({error:'Dice can be rolled once every 2 days.'});
-        const roll=crypto.randomInt(1,7),coinsReward=roll*10,gemsReward=roll*2;
-        filter.$or=[{'rewardClaims.dice':{$exists:false}},{'rewardClaims.dice':{$lte:new Date(now.getTime()-172800000)}}];
-        update={$inc:{coins:coinsReward,gems:gemsReward},$set:{'rewardClaims.dice':now}};
-        message=`🎲 Rolled [${roll}]! Won +${coinsReward} Coins & +${gemsReward} Gems!`;
-      }
-      const u=await User.findOneAndUpdate(filter,update,{new:true});
-      if(!u)return res.status(409).json({error:'This reward has already been claimed or is not available yet.'});
-      await Notice.create({userId:u._id,kind:'reward',message});
-      res.json({success:true,message,user:cleanUser(u)});
-    }catch(e){console.error('[Reward claim]',e);res.status(500).json({error:'Could not claim reward.'});}
-  });
   app.get('/api/dashboard',auth,async(req,res)=>{const day=new Date().toISOString().slice(0,10);const notices=await Notice.find({$or:[{userId:req.user._id},{userId:null}]}).sort({createdAt:-1}).limit(30).lean();const [appsRow,uiRow]=await Promise.all([Config.findOne({key:'apps'}).lean(),Config.findOne({key:'dashboardUI'}).lean()]);res.json({user:cleanUser(req.user),dailyAvailable:req.user.lastDaily!==day,notices, dashboardUI:uiRow?.value||{},apps:(appsRow?.value||[]).map(a=>({...a,unlocked:req.user.unlockedApps.includes(String(a.id||a.name))}))});});
   // Facebook-style social feed. Posts live in a separate MongoDB collection so existing bot/session data is untouched.
   app.get('/api/feed',auth,async(req,res)=>{
@@ -215,6 +164,7 @@ module.exports = function attachDashboard(app, options) {
   app.post('/api/presence/heartbeat',auth,async(req,res)=>{const now=new Date();await User.updateOne({_id:req.user._id},{$set:{lastSeen:now,onlineUntil:new Date(now.getTime()+45000)}});res.json({success:true,at:now});});
   app.get('/api/chat/:userId',auth,async(req,res)=>{const other=req.params.userId;if(!mongoose.isValidObjectId(other)||!(await connected(req.user._id,other)))return res.status(403).json({error:'Chat is available only after an invitation is accepted.'});const now=new Date();await PrivateMessage.updateMany({from:other,to:req.user._id,readAt:null},{$set:{readAt:now}});const [messages,people]=await Promise.all([PrivateMessage.find({$or:[{from:req.user._id,to:other},{from:other,to:req.user._id}]}).sort({createdAt:1}).limit(300).lean(),User.find({_id:{$in:[req.user._id,other]}}).select('username lastSeen onlineUntil').lean()]);const names=new Map(people.map(u=>[String(u._id),u.username]));const peer=people.find(u=>String(u._id)===String(other));res.json({peer:{isOnline:!!(peer?.onlineUntil&&peer.onlineUntil>now),lastSeen:peer?.lastSeen||null},messages:messages.map(m=>({id:String(m._id),from:String(m.from),username:names.get(String(m.from))||'User',text:m.text,replyTo:m.replyTo||null,createdAt:m.createdAt,readAt:m.readAt||null,reactions:m.reactions||[]}))});});
   app.post('/api/chat/:userId',auth,async(req,res)=>{const other=req.params.userId,text=String(req.body.text||'').trim();if(!mongoose.isValidObjectId(other)||!(await connected(req.user._id,other)))return res.status(403).json({error:'Chat is available only with an accepted contact.'});if(!text||text.length>2000)return res.status(400).json({error:'Message must be 1–2000 characters.'});let replyTo=null;if(req.body.replyTo&&mongoose.isValidObjectId(String(req.body.replyTo))){const parent=await PrivateMessage.findOne({_id:req.body.replyTo,$or:[{from:req.user._id,to:other},{from:other,to:req.user._id}]}).lean();if(parent){const author=await User.findById(parent.from).select('username').lean();replyTo={id:String(parent._id),username:author?.username||'User',text:parent.text.slice(0,240)};}}const message=await PrivateMessage.create({from:req.user._id,to:other,text,replyTo});res.status(201).json({message:{id:String(message._id),from:String(message.from),text:message.text,createdAt:message.createdAt}});});
+  app.post('/api/rewards/claim',auth,async(req,res)=>{try{const task=String(req.body.task||'');if(!['youtube','whatsapp'].includes(task))return res.status(400).json({error:'Invalid reward task.'});const reward=50;const u=await User.findOneAndUpdate({_id:req.user._id,taskClaims:{$ne:task}},{$inc:{coins:reward},$addToSet:{taskClaims:task}},{new:true});if(!u)return res.status(409).json({error:'This reward has already been claimed.'});await Notice.create({userId:u._id,kind:'coin',message:`${task==='youtube'?'YouTube subscribe':'WhatsApp Channel follow'} reward: +${reward} coins`});res.json({success:true,reward,user:cleanUser(u)});}catch(e){res.status(500).json({error:'Could not claim reward.'});}});
   app.post('/api/daily',auth,async(req,res)=>{const day=new Date().toISOString().slice(0,10),rewards=[20,30,40,50,100,150],reward=rewards[Math.floor(Math.random()*rewards.length)];const u=await User.findOneAndUpdate({_id:req.user._id,lastDaily:{$ne:day}},{$inc:{coins:reward},$set:{lastDaily:day}},{new:true});if(!u)return res.status(409).json({error:'Daily reward already claimed.'});await Notice.create({userId:u._id,kind:'coin',message:`Daily reward: +${reward} coins`});res.json({reward,user:cleanUser(u)});});
   app.post('/api/apps/unlock',auth,async(req,res)=>{const id=String(req.body.id||'');const row=await Config.findOne({key:'apps'}).lean();const app=(row?.value||[]).find(a=>String(a.id||a.name)===id);if(!app)return res.status(404).json({error:'App not found.'});if(req.user.unlockedApps.includes(id))return res.json({success:true,alreadyUnlocked:true});const price=Math.max(1,Number(app.price)||200);const u=await User.findOneAndUpdate({_id:req.user._id,coins:{$gte:price}},{$inc:{coins:-price},$addToSet:{unlockedApps:id}},{new:true});if(!u)return res.status(400).json({error:'Not enough coins.'});await Notice.create({userId:u._id,kind:'app',message:`Unlocked ${app.name}`});res.json({success:true,user:cleanUser(u),url:app.url||''});});
   app.post('/api/ai/chat',auth,async(req,res)=>{try{const key=String(process.env.OPENROUTER_API_KEY||'').trim();if(!key)return res.status(503).json({error:'ZANTA AI is not configured on the server.'});const messages=Array.isArray(req.body.messages)?req.body.messages.slice(-12).map(m=>({role:m?.role==='assistant'?'assistant':'user',content:String(m?.content||'').slice(0,4000)})).filter(m=>m.content):[];if(!messages.length)return res.status(400).json({error:'Message is required.'});const endpoint=process.env.OPENROUTER_ENDPOINT||'https://openrouter.ai/api/v1/chat/completions';const model=process.env.OPENROUTER_MODEL||'meta-llama/llama-3.3-70b-instruct';const prompt=[{role:'system',content:'You are ZANTA AI, the helpful AI assistant inside ZANTA-XMD. Be concise, friendly and accurate. If the user writes Sinhala, reply naturally in Sinhala.'},...messages];const r=await fetch(endpoint,{method:'POST',headers:{'Authorization':`Bearer ${key}`,'Content-Type':'application/json','HTTP-Referer':process.env.DASHBOARD_URL||'http://localhost:3000','X-Title':'ZANTA AI'},body:JSON.stringify({model,messages:prompt,temperature:.7,max_tokens:900})});const d=await r.json().catch(()=>({}));if(!r.ok)return res.status(502).json({error:d?.error?.message||'AI provider request failed.'});const text=d?.choices?.[0]?.message?.content;if(!text)return res.status(502).json({error:'AI returned an empty response.'});res.json({success:true,message:text,model});}catch(e){console.error('[ZANTA AI]',e);res.status(500).json({error:'ZANTA AI request failed.'});}});
