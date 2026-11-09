@@ -399,27 +399,91 @@ window.setTimeout(dismissStartupLoader,6500);
 })();
 function setDeviceMode(mode){
   if(mode!=='phone'&&mode!=='desktop')return;
-  localStorage.setItem('zanta_device_mode',mode);
+  if(mode==='desktop'){
+    var blocker=document.getElementById('desktopModeBlocker');
+    if(blocker) blocker.classList.add('show');
+    document.getElementById('deviceModeChooser').classList.add('hidden');
+    document.documentElement.style.overflow='hidden';
+    document.body.style.overflow='hidden';
+    return;
+  }
+  localStorage.setItem('zanta_device_mode','phone');
   document.body.classList.remove('mode-phone','mode-desktop');
-  document.body.classList.add('mode-'+mode);
+  document.body.classList.add('mode-phone');
   document.getElementById('deviceModeChooser').classList.add('hidden');
 }
 document.addEventListener('DOMContentLoaded',()=>{const box=document.getElementById('zantaModal');if(!box)return;const title=document.getElementById('zantaModalTitle'),msg=document.getElementById('zantaModalMessage'),icon=document.getElementById('zantaModalIcon'),actions=document.getElementById('zantaModalActions');let done=null;function show(text,kind='info',ask=false){box.classList.toggle('error',kind==='error');title.textContent=kind==='error'?'PLEASE CHECK':'ZANTA NOTIFICATION';icon.textContent=kind==='error'?'!':ask?'?':'✦';msg.textContent=String(text??'');actions.replaceChildren();return new Promise(resolve=>{done=resolve;const close=(value)=>{box.classList.remove('show');document.body.style.overflow='';done=null;resolve(value)};if(ask){const cancel=document.createElement('button');cancel.className='zanta-modal-btn secondary';cancel.textContent='CANCEL';cancel.onclick=()=>close(false);actions.append(cancel)}const ok=document.createElement('button');ok.className='zanta-modal-btn';ok.textContent=ask?'CONFIRM':'OK';ok.onclick=()=>close(ask?true:undefined);actions.append(ok);box.classList.add('show');document.body.style.overflow='hidden';ok.focus()})}window.alert=(message)=>{show(message,/error|failed|invalid|already|cannot|must/i.test(String(message))?'error':'info');};window.zantaConfirm=(message)=>show(message,'info',true);box.addEventListener('click',e=>{if(e.target===box&&done) {box.classList.remove('show');document.body.style.overflow='';const r=done;done=null;r(false)}});document.addEventListener('keydown',e=>{if(e.key==='Escape'&&done){box.classList.remove('show');document.body.style.overflow='';const r=done;done=null;r(false)}})});
 </script>
 <div class="zanta-modal-backdrop" id="zantaModal" role="dialog" aria-modal="true" aria-labelledby="zantaModalTitle"><div class="zanta-modal"><div class="zanta-modal-inner"><div class="zanta-modal-head"><div class="zanta-modal-icon" id="zantaModalIcon">✦</div><div class="zanta-modal-title" id="zantaModalTitle">ZANTA NOTIFICATION</div></div><div class="zanta-modal-message" id="zantaModalMessage"></div><div class="zanta-modal-actions" id="zantaModalActions"></div></div></div></div>
 
-<style>
-/* Bottom ad RGB frame */
-.zanta-ad-rgb-frame{position:fixed;left:10px;right:10px;bottom:76px;min-height:72px;border:1px solid transparent;border-radius:18px;padding:2px;background:linear-gradient(#080d19,#080d19) padding-box,linear-gradient(90deg,#00e5ff,#7c3aed,#ff2bd6,#ffe600,#00e5ff) border-box;background-size:100% 100%,300% 100%;animation:zantaAdRGB 5s linear infinite;box-shadow:0 0 16px #00e5ff22,0 0 26px #ff2bd622;pointer-events:none;z-index:9990;overflow:hidden}
-.zanta-ad-rgb-frame:before{content:"";position:absolute;inset:0;border-radius:16px;background:linear-gradient(90deg,transparent,#00e5ff10,#7c3aed10,#ff2bd610,transparent);animation:zantaAdGlow 2.8s ease-in-out infinite;pointer-events:none}
-@keyframes zantaAdRGB{to{background-position:0 0,300% 0}}
-@keyframes zantaAdGlow{50%{opacity:.45;filter:brightness(1.5)}}
-@media(max-width:520px){.zanta-ad-rgb-frame{left:7px;right:7px;bottom:73px;min-height:64px;border-radius:15px}}
-@media(min-width:750px){.zanta-ad-rgb-frame{left:50%;right:auto;width:min(728px,calc(100vw - 40px));transform:translateX(-50%);bottom:20px;min-height:90px}}
-</style>
-<div class="zanta-ad-rgb-frame" aria-hidden="true"></div>
 <!-- Adsterra Popunder -->
 <script data-cfasync="false" src="https://abscloud.org/1/a40d2f9eadded153b407acc4074354c9"></script>
 <!-- Adsterra Social Bar -->
 <script data-cfasync="false" src="https://bauval.org/14/2335d88141ba14d4a4e4d25215d4dcfd"></script>
+
+<style id="desktop-mode-block-style">
+#desktopModeBlocker{
+  position:fixed;inset:0;z-index:2147483647;display:none;
+  align-items:center;justify-content:center;padding:22px;
+  background:radial-gradient(circle at 50% 20%,#101d35 0%,#03050a 55%,#000 100%);
+  color:#fff;text-align:center;font-family:inherit;
+}
+#desktopModeBlocker.show{display:flex}
+#desktopModeBlocker .dmb-card{
+  width:min(470px,100%);padding:28px 22px;border-radius:26px;
+  background:linear-gradient(145deg,#0b1426,#050914);
+  border:1px solid #38cfff;
+  box-shadow:0 0 28px #00cfff33,0 0 80px #7c3cff22;
+}
+#desktopModeBlocker .dmb-icon{font-size:52px;margin-bottom:8px}
+#desktopModeBlocker h2{margin:0 0 10px;font-size:25px}
+#desktopModeBlocker p{margin:0;color:#aebed5;line-height:1.65;font-size:14px}
+#desktopModeBlocker .dmb-note{
+  margin-top:15px;padding:11px 13px;border-radius:14px;
+  background:#ff174f12;border:1px solid #ff174f55;color:#ffd7df;font-size:12px
+}
+#desktopModeBlocker button{
+  width:100%;margin-top:18px;padding:13px 16px;border:0;border-radius:14px;
+  color:#fff;font-weight:900;background:linear-gradient(110deg,#00cfff,#7657ff,#ff35c8);
+}
+</style>
+<div id="desktopModeBlocker" aria-modal="true" role="dialog">
+  <div class="dmb-card">
+    <div class="dmb-icon">📱</div>
+    <h2>DESKTOP MODE OFF කරන්න</h2>
+    <p>මේ website එක Phone Mode එකෙන් පමණක් භාවිතා කළ හැක.</p>
+    <div class="dmb-note">Browser එකේ <b>Desktop site / Desktop mode</b> OFF කරලා page එක Reload කරන්න.</div>
+    <button type="button" onclick="location.reload()">🔄 RELOAD</button>
+  </div>
+</div>
+<script id="desktop-mode-block-script">
+(function(){
+  function isDesktopMode(){
+    var ua=navigator.userAgent||'';
+    var mobileUA=/Android|iPhone|iPad|iPod|Mobile/i.test(ua);
+    var touch=('ontouchstart' in window)||(navigator.maxTouchPoints||0)>0;
+    var wide=(window.innerWidth||document.documentElement.clientWidth||0)>700;
+    /*
+     * On phones/tablets, a browser's "Desktop site" mode commonly
+     * exposes a desktop-like viewport. Keep real desktop computers
+     * unaffected when they have no touch/mobile indicators.
+     */
+    return (mobileUA && wide) || (touch && wide && Math.min(screen.width||0,screen.height||0)>600);
+  }
+  function block(){
+    var b=document.getElementById('desktopModeBlocker');
+    if(!b)return;
+    b.classList.add('show');
+    document.documentElement.style.overflow='hidden';
+    document.body.style.overflow='hidden';
+  }
+  window.zantaCheckDesktopMode=function(){
+    if(isDesktopMode()) block();
+  };
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',window.zantaCheckDesktopMode);
+  else window.zantaCheckDesktopMode();
+  window.addEventListener('resize',window.zantaCheckDesktopMode);
+})();
+</script>
+
 </body></html>
