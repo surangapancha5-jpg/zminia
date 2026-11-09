@@ -102,7 +102,7 @@ if (!global.videoSessions) global.videoSessions = new Map();
 if (!global.settingSessions) global.settingSessions = new Map();
 if (!global.activeBotSockets) global.activeBotSockets = new Set();
 
-app.use(express.json({ limit: '12mb' }));
+app.use(express.json({ limit: '8mb' }));
 app.use(express.urlencoded({ extended: true }));
 
 const MetaSchema = new mongoose.Schema({
